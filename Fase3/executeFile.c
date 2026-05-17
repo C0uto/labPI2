@@ -24,6 +24,48 @@ typedef struct {
 
 // ========== FUNÇÕES AUXILIARES ==========
 
+const char *card2str(CARTA card) {
+    char *valor = "A23456789TJQK", *naipe = "SHDC";
+    static char res[3];
+    if (card <= 0) return "  ";
+    res[0] = valor[(card - 1) % 13];
+    res[1] = naipe[(card - 1) / 13];
+    res[2] = '\0';
+    return res;
+}
+
+void imprimirLinha(ESTADO *j, int lin) {
+    for (int col = 0; col < j->num_pilhas; col++) {
+        printf(" %s\t", card2str(j->paciencia[col][lin]));
+    }
+    printf("\n");
+}
+
+void imprimirTabuleiro(ESTADO *j) {
+    if (!j->paciencia) return;
+    for (int lin = 0; lin < j->max_cartas_por_pilha; lin++) {
+        int tem_carta = 0;
+        for (int col = 0; col < j->num_pilhas; col++) {
+            if (j->paciencia[col][lin] > 0) tem_carta = 1;
+        }
+        if (!tem_carta) break;
+        imprimirLinha(j, lin);
+    }
+}
+
+void mostrarEstado(ESTADO *jogo) {
+    printf("\n================ ESTADO DO JOGO ===============\n");
+    if (jogo->fundacao > 0)
+        printf("Fundação atual: %s\n", card2str(jogo->fundacao));
+    if (jogo->cartas_no_baralho > 0)
+        printf("Cartas no Stock: %d\n", jogo->cartas_no_baralho);
+    if (jogo->paciencia != NULL) {
+        printf("-----------------------------------------------\n");
+        imprimirTabuleiro(jogo);
+    }
+    printf("===============================================\n");
+}
+
 void imprimirTipos(RegrasTipo rt) {
     while (rt != NULL) {
         printf("   - TIPO %s %s\n", rt->tipoDePilha, rt->flags[0]);
@@ -189,6 +231,7 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     jogo.B = aplicarBaralhos(rb);
     aplicarTipo(rt);
     aplicarInit(ri, &jogo, jogo.B);
+    mostrarEstado(&jogo);
     aplicarMovAuto(rma);
     aplicarWin(rw);
     printf("========== REGRAS APLICADAS ==========\n\n");
