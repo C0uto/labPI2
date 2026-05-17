@@ -53,6 +53,45 @@ void imprimirTabuleiro(ESTADO *j) {
     }
 }
 
+int getPilhaTamanho(ESTADO *j, int col) {
+    int i = 0;
+    while (i < j->max_cartas_por_pilha && j->paciencia[col][i] != 0) i++;
+    return i;
+}
+
+void tratarPilha(char *input, ESTADO *j) {
+    int o, d;
+    if (sscanf(input, "p %d %d", &o, &d) != 2) return;
+    o--; d--; 
+    if (o < 0 || o >= j->num_pilhas || d < 0 || d >= j->num_pilhas) return;
+    int to = getPilhaTamanho(j, o), td = getPilhaTamanho(j, d);
+    if (to > 0 && td < j->max_cartas_por_pilha) {
+        j->paciencia[d][td] = j->paciencia[o][to - 1];
+        j->paciencia[o][to - 1] = 0;
+        mostrarEstado(j);
+    }
+}
+
+void tratarBaralho(ESTADO *j) {
+    if (j->B == NULL || j->cartas_no_baralho <= 0) {
+        printf("\nErro: Operação inválida. O baralho não existe ou está vazio.\n");
+        return;
+    }
+    j->fundacao = j->B[j->posicao_topo_do_baralho];
+    j->posicao_topo_do_baralho++;
+    j->cartas_no_baralho--;
+    mostrarEstado(j);
+}
+
+void tratarAjuda() {
+    printf("\nComandos permitidos:\n");
+    printf(" p O D - Move a carta do topo da pilha O para a pilha D\n");
+    printf(" b     - Retira uma carta do baralho para a fundação\n");
+    printf(" e     - Mostra o estado atual do jogo\n");
+    printf(" h     - Mostra esta ajuda\n");
+    printf(" q     - Sai do jogo\n");
+}
+
 void mostrarEstado(ESTADO *jogo) {
     printf("\n================ ESTADO DO JOGO ===============\n");
     if (jogo->fundacao > 0)
@@ -218,6 +257,26 @@ void limparEstado(ESTADO *jogo) {
     if (jogo->B) free(jogo->B);
 }
 
+void processarComando(char *buf, ESTADO *j) {
+    if (buf[0] == 'p') tratarPilha(buf, j);
+    else if (buf[0] == 'b') tratarBaralho(j);
+    else if (buf[0] == 'e') mostrarEstado(j);
+    else if (buf[0] == 'h') tratarAjuda();
+    else printf("Comando desconhecido. Use 'h' para ajuda.\n");
+}
+
+void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck) {
+    char buf[256];
+    while (1) {
+        printf("JOGO> ");
+        if (!fgets(buf, 256, stdin)) break;
+        buf[strcspn(buf, "\n")] = 0;
+        if (buf[0] == 'q') break;
+        if (buf[0] == 'r') aplicarInit(ri, j, originalDeck);
+        else processarComando(buf, j);
+    }
+}
+
 // ========== FUNÇÃO PRINCIPAL DE EXECUÇÃO ==========
 
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb, 
@@ -232,6 +291,10 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     aplicarTipo(rt);
     aplicarInit(ri, &jogo, jogo.B);
     mostrarEstado(&jogo);
+
+    printf("\nUse 'h' para ver os comandos disponíveis.\n");
+    loopComandos(&jogo, ri, jogo.B);
+
     aplicarMovAuto(rma);
     aplicarWin(rw);
     printf("========== REGRAS APLICADAS ==========\n\n");
