@@ -259,7 +259,7 @@ void processarComando(char *buf, ESTADO *j) {
 void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck) {
     char buf[256];
     while (1) {
-        printf("JOGO> ");
+        printf("%s> ", rj->jogoNome);
         if (!fgets(buf, 256, stdin)) break;
         buf[strcspn(buf, "\n")] = 0;
         if (buf[0] == 'q') break;
@@ -281,13 +281,10 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     jogo.B = aplicarBaralhos(rb);
     aplicarTipo(rt);
     aplicarInit(ri, &jogo, jogo.B);
-    mostrarEstado(&jogo);
-
-    printf("\nUse 'h' para ver os comandos disponíveis.\n");
-    loopComandos(&jogo, ri, jogo.B);
-
     aplicarMovAuto(rma);
     aplicarWin(rw);
     printf("========== REGRAS APLICADAS ==========\n\n");
+    mostrarEstado(&jogo);
+    loopComandos(&jogo, ri, jogo.B);
     limparEstado(&jogo);
 }
