@@ -14,3 +14,4 @@ typedef struct {
 
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb, 
              RegrasTipo rt, RegrasInit ri, RegrasWin rw);
+:

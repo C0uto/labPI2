@@ -1,3 +1,4 @@
+#include <string.h>
 typedef struct regra {
     char flags[2][21];
     char *comando;
