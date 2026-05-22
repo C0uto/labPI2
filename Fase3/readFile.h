@@ -1,5 +1,4 @@
 #include <string.h>
-#include <stdio.h>
 typedef struct regra {
     char flags[2][21];
     char *comando;
@@ -61,10 +60,5 @@ typedef struct {
         const char *feedback;
 } FEEDBACK;
 
-MENSAGENS leFicheiro (FILE *f, RegrasMovAuto *rma, RegrasJogo *rj, RegrasBaralhos *rb, RegrasTipo *rt, RegrasInit *ri, RegrasWin *rw);
-MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *temp3, char *flags_str, char *linha, int lidos);
-MENSAGENS leLinhaInit (RegrasInit *ri, char *temp1, char *temp2, char *linha, int lidos);
-MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2, char *flags_str, char *linha, int lidos);
-MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1,   char *temp2, char *linha, int lidos);
-MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1, char *linha, int lidos);
-MENSAGENS
+MENSAGENS leFicheiro(FILE *f, RegrasMovAuto *rma, RegrasJogo *rj, RegrasBaralhos *rb, RegrasTipo *rt, RegrasInit *ri, RegrasWin *rw);
+
