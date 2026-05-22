@@ -256,10 +256,10 @@ void processarComando(char *buf, ESTADO *j) {
     else printf("Comando desconhecido. Use 'h' para ajuda.\n");
 }
 
-void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck) {
+void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck, const char *nome_jogo) {
     char buf[256];
     while (1) {
-        printf("%s> ", ri->jogoNome);
+        printf("%s> ", nome_jogo);
         if (!fgets(buf, 256, stdin)) break;
         buf[strcspn(buf, "\n")] = 0;
         if (buf[0] == 'q') break;
@@ -285,6 +285,6 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     aplicarWin(rw);
     printf("========== REGRAS APLICADAS ==========\n\n");
     mostrarEstado(&jogo);
-    loopComandos(&jogo, ri, jogo.B);
+    loopComandos(&jogo, ri, jogo.B, rj->jogoNome);
     limparEstado(&jogo);
 }
