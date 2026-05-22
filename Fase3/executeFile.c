@@ -231,11 +231,16 @@ void processarNoInit(RegrasInit ri, ESTADO *j, int *col_tab, BARALHO d, int *idx
     if (strcmp(ri->tipoDePilha, "TAB") == 0) {
         preencherTAB(ri, j, *col_tab, d, idx);
         (*col_tab)++;
-    } else if (strcmp(ri->tipoDePilha, "DESCARTE") == 0) {
-        if (ri->numeroDeCartas > 0) j->fundacao = d[(*idx)++];
+    } else if (strcmp(ri->tipoDePilha, "DESCARTE") == 0 || strcmp(ri->tipoDePilha, "FUND") == 0) {
+        // Se houver várias cartas para a fundação, idx deve avançar para todas
+        for (int i = 0; i < ri->numeroDeCartas; i++) {
+            j->fundacao = d[(*idx)++];
+        }
     } else if (strcmp(ri->tipoDePilha, "STOCK") == 0) {
         j->posicao_topo_do_baralho = *idx;
         j->cartas_no_baralho = ri->numeroDeCartas;
+        // IMPORTANTE: Avançar o índice do baralho para não sobrepor com outras pilhas
+        (*idx) += ri->numeroDeCartas;
     }
 }
 
