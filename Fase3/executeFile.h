@@ -12,6 +12,10 @@ typedef struct {
     BARALHO B; 
 } ESTADO;
 
+// Protótipos das funções para evitar avisos de declaração implícita
+const char *card2str(CARTA card);
+void mostrarEstado(ESTADO *jogo);
+void imprimirTabuleiro(ESTADO *j);
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb, 
              RegrasTipo rt, RegrasInit ri, RegrasWin rw);
 :
