@@ -5,7 +5,7 @@
 
 int main () {
     RegrasMovAuto listaMA = NULL;
-    RegrasJogo listaJ = malloc(sizeof(struct regra2));;
+    RegrasJogo listaJ = malloc(sizeof(struct regra2));
     RegrasBaralhos listaB = malloc(sizeof(struct regra3));
     RegrasTipo listaT = NULL;
     RegrasInit listaI = NULL;
