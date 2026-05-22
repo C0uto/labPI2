@@ -18,4 +18,3 @@ void mostrarEstado(ESTADO *jogo);
 void imprimirTabuleiro(ESTADO *j);
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb, 
              RegrasTipo rt, RegrasInit ri, RegrasWin rw);
-:
