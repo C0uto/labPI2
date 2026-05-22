@@ -179,16 +179,26 @@ BARALHO aplicarBaralhos(RegrasBaralhos rb) {
     return b;
 }
 
-int encontrarTotalTab(RegrasInit ri) {
+int contarColunasTab(RegrasInit ri) {
+    int colunas = 0;
     while (ri != NULL) {
-        if (strcmp(ri->tipoDePilha, "TAB") == 0) return ri->numeroDeCartas;
+        if (strcmp(ri->tipoDePilha, "TAB") == 0) colunas++;
         ri = ri->prox;
     }
-    return 0;
+    return colunas;
 }
 
-void alocarTabuleiro(ESTADO *jogo, int total) {
-    if (total <= 0) return;
+int encontrarMaxCartasInit(RegrasInit ri) {
+    int max = 0;
+    while (ri != NULL) {
+        if (ri->numeroDeCartas > max) max = ri->numeroDeCartas;
+        ri = ri->prox;
+    }
+    return max;
+}
+
+void alocarTabuleiro(ESTADO *jogo, int n_pilhas, int max_cartas) {
+    if (n_pilhas <= 0) return;
     // Libertar memória se já existir tabuleiro (evita leak no reset)
     if (jogo->paciencia != NULL) {
         for (int i = 0; i < jogo->num_pilhas; i++) {
@@ -197,9 +207,10 @@ void alocarTabuleiro(ESTADO *jogo, int total) {
         free(jogo->paciencia);
     }
     
-    int max_inf = 5;
-    jogo->num_pilhas = (total + max_inf - 1) / max_inf;
-    jogo->max_cartas_por_pilha = max_inf + 10;
+    jogo->num_pilhas = n_pilhas;
+    // Definimos uma altura generosa: o máximo inicial + 15 para movimentos
+    jogo->max_cartas_por_pilha = max_cartas + 15; 
+    
     jogo->paciencia = malloc(jogo->num_pilhas * sizeof(CARTA *));
     for (int i = 0; i < jogo->num_pilhas; i++) {
         jogo->paciencia[i] = calloc(jogo->max_cartas_por_pilha, sizeof(CARTA));
@@ -207,19 +218,19 @@ void alocarTabuleiro(ESTADO *jogo, int total) {
     }
 }
 
-void preencherTAB(RegrasInit ri, ESTADO *j, BARALHO d, int *idx) {
-    int max_inf = 5;
+void preencherTAB(RegrasInit ri, ESTADO *j, int col, BARALHO d, int *idx) {
+    if (col >= j->num_pilhas) return;
     for (int i = 0; i < ri->numeroDeCartas; i++) {
-        int col = i / max_inf, lin = i % max_inf;
-        if (col < j->num_pilhas && lin < j->max_cartas_por_pilha) {
-            j->paciencia[col][lin] = d[(*idx)++];
-        } else (*idx)++;
+        if (i < j->max_cartas_por_pilha) {
+            j->paciencia[col][i] = d[(*idx)++];
+        }
     }
 }
 
-void processarNoInit(RegrasInit ri, ESTADO *j, BARALHO d, int *idx) {
+void processarNoInit(RegrasInit ri, ESTADO *j, int *col_tab, BARALHO d, int *idx) {
     if (strcmp(ri->tipoDePilha, "TAB") == 0) {
-        preencherTAB(ri, j, d, idx);
+        preencherTAB(ri, j, *col_tab, d, idx);
+        (*col_tab)++;
     } else if (strcmp(ri->tipoDePilha, "DESCARTE") == 0) {
         if (ri->numeroDeCartas > 0) j->fundacao = d[(*idx)++];
     } else if (strcmp(ri->tipoDePilha, "STOCK") == 0) {
@@ -231,11 +242,17 @@ void processarNoInit(RegrasInit ri, ESTADO *j, BARALHO d, int *idx) {
 void aplicarInit(RegrasInit ri, ESTADO *jogo, BARALHO deck) {
     if (ri == NULL) return;
     printf("4. [INIT] Inicializando pilhas:\n");
-    alocarTabuleiro(jogo, encontrarTotalTab(ri));
+    
+    int n_pilhas = contarColunasTab(ri);
+    int max_altura = encontrarMaxCartasInit(ri);
+    alocarTabuleiro(jogo, n_pilhas, max_altura);
+
     int carta_idx = 0;
-    while (ri != NULL) {
-        processarNoInit(ri, jogo, deck, &carta_idx);
-        ri = ri->prox;
+    int col_atual = 0;
+    RegrasInit aux = ri;
+    while (aux != NULL) {
+        processarNoInit(aux, jogo, &col_atual, deck, &carta_idx);
+        aux = aux->prox;
     }
 }
 
