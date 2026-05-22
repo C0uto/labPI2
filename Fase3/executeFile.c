@@ -1,11 +1,25 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <readFile.h>
+#include "readFile.h"
 #include <time.h>
 #include "executeFile.h"
 
 // ========== FUNÇÕES AUXILIARES ==========
+
+void mostrarEstado(ESTADO *jogo) {
+    printf("\n================ ESTADO DO JOGO ===============\n");
+    if (jogo->fundacao > 0)
+        printf("Fundação atual: %s\n", card2str(jogo->fundacao));
+    if (jogo->cartas_no_baralho > 0)
+        printf("Cartas no Stock: %d\n", jogo->cartas_no_baralho);
+    if (jogo->paciencia != NULL) {
+        printf("-----------------------------------------------\n");
+        imprimirTabuleiro(jogo);
+    }
+    printf("===============================================\n");
+}
+
 
 const char *card2str(CARTA card) {
     char *valor = "A23456789TJQK", *naipe = "SHDC";
@@ -75,18 +89,6 @@ void tratarAjuda() {
     printf(" q     - Sai do jogo\n");
 }
 
-void mostrarEstado(ESTADO *jogo) {
-    printf("\n================ ESTADO DO JOGO ===============\n");
-    if (jogo->fundacao > 0)
-        printf("Fundação atual: %s\n", card2str(jogo->fundacao));
-    if (jogo->cartas_no_baralho > 0)
-        printf("Cartas no Stock: %d\n", jogo->cartas_no_baralho);
-    if (jogo->paciencia != NULL) {
-        printf("-----------------------------------------------\n");
-        imprimirTabuleiro(jogo);
-    }
-    printf("===============================================\n");
-}
 
 void imprimirTipos(RegrasTipo rt) {
     while (rt != NULL) {
@@ -165,6 +167,14 @@ int encontrarTotalTab(RegrasInit ri) {
 
 void alocarTabuleiro(ESTADO *jogo, int total) {
     if (total <= 0) return;
+    // Libertar memória se já existir tabuleiro (evita leak no reset)
+    if (jogo->paciencia != NULL) {
+        for (int i = 0; i < jogo->num_pilhas; i++) {
+            free(jogo->paciencia[i]);
+        }
+        free(jogo->paciencia);
+    }
+    
     int max_inf = 5;
     jogo->num_pilhas = (total + max_inf - 1) / max_inf;
     jogo->max_cartas_por_pilha = max_inf + 10;

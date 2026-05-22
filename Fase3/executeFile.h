@@ -1,3 +1,5 @@
+#include "readFile.h"
+
 typedef char CARTA;
 typedef CARTA *BARALHO;
 typedef struct { 
@@ -9,3 +11,6 @@ typedef struct {
     int posicao_topo_do_baralho; 
     BARALHO B; 
 } ESTADO;
+
+void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb, 
+             RegrasTipo rt, RegrasInit ri, RegrasWin rw);

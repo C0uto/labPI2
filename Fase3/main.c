@@ -2,7 +2,8 @@
 #include <string.h>
 #include <dirent.h>
 #include <stdlib.h>
-#include "readFile.c"
+#include "readFile.h"
+#include "executeFile.h"
 
 int main () {
     RegrasMovAuto listaMA = NULL;
@@ -39,4 +40,12 @@ int main () {
     }
     Mensagens a = leFicheiro(f,&listaMA,&listaJ,&listaB,&listaT,&listaI,&listaW);
     fclose(f);
+
+    if (a == OK) {
+        execute(listaMA, listaJ, listaB, listaT, listaI, listaW);
+    } else {
+        printf("Erro ao processar o ficheiro de regras (Codigo: %d).\n", a);
+    }
+
+    return 0;
 }
