@@ -55,15 +55,39 @@ int getPilhaTamanho(ESTADO *j, int col) {
 }
 
 void tratarPilha(char *input, ESTADO *j) {
-    int o, d;
-    if (sscanf(input, "p %d %d", &o, &d) != 2) return;
-    o--; d--; 
-    if (o < 0 || o >= j->num_pilhas || d < 0 || d >= j->num_pilhas) return;
-    int to = getPilhaTamanho(j, o), td = getPilhaTamanho(j, d);
-    if (to > 0 && td < j->max_cartas_por_pilha) {
-        j->paciencia[d][td] = j->paciencia[o][to - 1];
-        j->paciencia[o][to - 1] = 0;
-        mostrarEstado(j);
+    int pilhaOrigem, pilhaDestino, numCartas;
+    char char_dummy; // Variável auxiliar para absorver a letra 'p'
+
+    // Tenta ler até 4 argumentos (p, origem, destino, quantidade)
+    int lidos = sscanf(input, " %c %d %d %d", &char_dummy, &pilhaOrigem, &pilhaDestino, &numCartas);
+
+    if (lidos >= 3) {
+        // Se não colocar número de cartas, o seu valor será 1
+        if (lidos == 3) numCartas = 1;
+
+        int o = pilhaOrigem - 1; // Ajuste para índice 0
+        int d = pilhaDestino - 1;
+
+        if (o < 0 || o >= j->num_pilhas || d < 0 || d >= j->num_pilhas) {
+            printf("Pilha inválida, tenta novamente.\n");
+            return;
+        }
+
+        int to = getPilhaTamanho(j, o);
+        int td = getPilhaTamanho(j, d);
+
+        // Valida se a origem tem cartas suficientes e se o destino tem espaço
+        if (numCartas > 0 && to >= numCartas && (td + numCartas) <= j->max_cartas_por_pilha) {
+            for (int i = 0; i < numCartas; i++) {
+                j->paciencia[d][td + i] = j->paciencia[o][to - numCartas + i];
+                j->paciencia[o][to - numCartas + i] = 0;
+            }
+            mostrarEstado(j);
+        } else {
+            printf("Jogada inválida!\n");
+        }
+    } else {
+        printf("Comando incompleto! Tenta o formato: p <origem> <destino> [<cartas>]\n");
     }
 }
 
@@ -248,23 +272,64 @@ void limparEstado(ESTADO *jogo) {
     if (jogo->B) free(jogo->B);
 }
 
+// ========== GESTÃO DE COMANDOS (ESTILO FASE 1/2) ==========
+
+typedef struct {
+    char tecla;
+    void (*funcao)(char *, ESTADO *);
+} COMANDO_INFO;
+
+// Wrappers para uniformizar as assinaturas das funções de comando
+void cmd_baralho(char *s, ESTADO *j) { (void)s; tratarBaralho(j); }
+void cmd_estado(char *s, ESTADO *j) { (void)s; mostrarEstado(j); }
+void cmd_ajuda(char *s, ESTADO *j) { (void)s; (void)j; tratarAjuda(); }
+
 void processarComando(char *buf, ESTADO *j) {
-    if (buf[0] == 'p') tratarPilha(buf, j);
-    else if (buf[0] == 'b') tratarBaralho(j);
-    else if (buf[0] == 'e') mostrarEstado(j);
-    else if (buf[0] == 'h') tratarAjuda();
-    else printf("Comando desconhecido. Use 'h' para ajuda.\n");
+    COMANDO_INFO comandos[] = {
+        {'p', tratarPilha},
+        {'b', cmd_baralho},
+        {'e', cmd_estado},
+        {'h', cmd_ajuda},
+        {0,   NULL} // Sentinela
+    };
+
+    int i = 0;
+    int encontrado = 0;
+
+    while (comandos[i].tecla != 0 && !encontrado) {
+        if (buf[0] == comandos[i].tecla) {
+            comandos[i].funcao(buf, j);
+            encontrado = 1;
+        }
+        i++;
+    }
+
+    if (!encontrado) {
+        printf("Comando desconhecido. Use 'h' para ajuda.\n");
+    }
 }
 
 void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck, const char *nome_jogo) {
     char buf[256];
-    while (1) {
+    int continuar = 1;
+
+    while (continuar) {
         printf("%s> ", nome_jogo);
-        if (!fgets(buf, 256, stdin)) break;
-        buf[strcspn(buf, "\n")] = 0;
-        if (buf[0] == 'q') break;
-        if (buf[0] == 'r') aplicarInit(ri, j, originalDeck);
-        else processarComando(buf, j);
+        if (fgets(buf, 256, stdin) == NULL) {
+            continuar = 0;
+        } else {
+            buf[strcspn(buf, "\n")] = 0;
+            if (buf[0] != '\0') {
+                if (buf[0] == 'q') {
+                    continuar = 0;
+                } else if (buf[0] == 'r') {
+                    aplicarInit(ri, j, originalDeck);
+                    mostrarEstado(j);
+                } else {
+                    processarComando(buf, j);
+                }
+            }
+        }
     }
 }
 
