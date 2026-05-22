@@ -27,7 +27,7 @@ void inicializarWin(RegrasWin r) {
     r->prox = NULL;
 }
 
-Mensagens guardaflagsMA (RegrasMovAuto r, char *flags_str) {
+MENSAGENS guardaflagsMA (RegrasMovAuto r, char *flags_str) {
     for(int i = 0; flags_str[i]!='\0';i++) {
         int encontrado = 0;
         for(int z = 0; z<21; z++) {
@@ -41,7 +41,7 @@ Mensagens guardaflagsMA (RegrasMovAuto r, char *flags_str) {
     return OK;
 }
 
-Mensagens guardaflagsT (RegrasTipo rt, char *flags_str) {
+MENSAGENS guardaflagsT (RegrasTipo rt, char *flags_str) {
     for(int i = 0; flags_str[i]!='\0';i++) {
         int encontrado = 0;
         for(int z = 0; z<5; z++) {
@@ -64,13 +64,13 @@ void novaStructMovAuto (RegrasMovAuto novo, char *temp1, char *temp2, char *temp
     strcpy(novo->destino,temp3);
 }
 
-Mensagens leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lidos) {
+MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lidos) {
     RegrasMovAuto novo = malloc(sizeof(struct regra));
     inicializarMA(novo);
     lidos = sscanf(linha,"%s %s %s %s",temp1,temp2,temp3,flags_str);
     if(lidos != 4) return Comando_INVALIDO;
     novaStructMovAuto (novo,temp1,temp2,temp3);
-    Mensagens x = guardaflagsMA(novo,flags_str);
+    MENSAGENS x = guardaflagsMA(novo,flags_str);
     if(x==Flag_INVALIDA) return x;
     novo->prox = *rma;
     if (*rma) (*rma)->ant = novo;
@@ -78,7 +78,7 @@ Mensagens leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *te
     return OK;
 }
 
-Mensagens leLinhaInit (RegrasInit *ri, char *temp1, char *temp2,char *linha,int lidos) {
+MENSAGENS leLinhaInit (RegrasInit *ri, char *temp1, char *temp2,char *linha,int lidos) {
     RegrasInit novo = malloc(sizeof(struct regra5));
     inicializarInit(novo);
     lidos = sscanf(linha,"%s %s %d",temp1,temp2,&novo->numeroDeCartas);
@@ -93,7 +93,7 @@ Mensagens leLinhaInit (RegrasInit *ri, char *temp1, char *temp2,char *linha,int 
     return OK;
 }
 
-Mensagens leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,char *linha,int lidos) {
+MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,char *linha,int lidos) {
     RegrasTipo novo = malloc(sizeof(struct regra4));
     inicializarT(novo);
     lidos = sscanf(linha,"%s %s %s",temp1,temp2,flags_str);
@@ -102,7 +102,7 @@ Mensagens leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,
     novo->tipoDePilha = malloc(strlen(temp2) + 1);
     strcpy(novo->comando,temp1);
     strcpy(novo->tipoDePilha,temp2);
-    Mensagens x = guardaflagsT(novo,flags_str);
+    MENSAGENS x = guardaflagsT(novo,flags_str);
     if(x==Flag_INVALIDA) return x;
     novo->prox = *rt;
     if (*rt) (*rt)->ant = novo;
@@ -110,7 +110,7 @@ Mensagens leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,
     return OK;
 }
 
-Mensagens leLinhaWin (RegrasWin *rw, char *temp1, char *temp2,char *linha,int lidos) {
+MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1, char *temp2,char *linha,int lidos) {
     RegrasWin novo = malloc(sizeof(struct regra6));
     inicializarWin(novo);
     lidos = sscanf(linha,"%s %s %d",temp1,temp2,&novo->condicaoWin);
@@ -125,7 +125,7 @@ Mensagens leLinhaWin (RegrasWin *rw, char *temp1, char *temp2,char *linha,int li
     return OK;
 }
 
-Mensagens leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha,int lidos) {
+MENSAGENS leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha,int lidos) {
     if((*rj)->comando != NULL) return Comando_INVALIDO;
     lidos = sscanf(linha,"%s %s",temp1,temp2);
     if(lidos != 2) return Comando_INVALIDO;
@@ -136,7 +136,7 @@ Mensagens leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha,int 
     return OK;
 }
 
-Mensagens leLinhaBaralho (RegrasBaralhos *rb, char *temp1,char *linha,int lidos) {
+MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1,char *linha,int lidos) {
     if((*rb)->comando != NULL) return Comando_INVALIDO;
     lidos = sscanf(linha,"%s %d",temp1,&(*rb)->numeroDeBaralhos);
     if(lidos != 2 || (*rb)->numeroDeBaralhos < 1) return Comando_INVALIDO;
@@ -145,8 +145,8 @@ Mensagens leLinhaBaralho (RegrasBaralhos *rb, char *temp1,char *linha,int lidos)
     return OK;
 }
 
-Mensagens verificaLinhaBranco (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lida){
-    Mensagens x;
+MENSAGENS verificaLinhaBranco (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lida){
+    MENSAGENS x;
     if(lida==1) {
        if(strcmp(temp1,"MOV") == 0 || strcmp(temp1,"AUTO") == 0) x = leLinhaMovAuto (rma,temp1,temp2,temp3,flags_str,linha,lida);
        else if(strcmp(temp1,"INIT") == 0) x = leLinhaInit (ri,temp1,temp2,linha,lida);
@@ -160,7 +160,7 @@ Mensagens verificaLinhaBranco (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasB
    return OK;
 }
 
-Mensagens leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw) {
+MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw) {
     char temp1[200];
     char temp2[200];
     char temp3[200];
@@ -171,7 +171,7 @@ Mensagens leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *
       char *coment = strchr(linha, '#');//o strchr procura a primeira ocorrência do caractere # dentro da string. Se encontrar, devolve um ponteiro para essa posição dentro da própria string.
       if (coment != NULL) *coment = '\0';//vejo se o ponteiro não é null, ou seja se existe '#' e se existir coloco '\0' para apagar os comentários
       lida = sscanf(linha,"%s",temp1);
-      Mensagens x = verificaLinhaBranco (f,rma,rj,rb,rt,ri,rw,temp1,temp2,temp3,flags_str,linha,lida);
+      MENSAGENS x = verificaLinhaBranco (f,rma,rj,rb,rt,ri,rw,temp1,temp2,temp3,flags_str,linha,lida);
       if(x!=OK) return x;
     }
     return OK;
