@@ -36,7 +36,7 @@ int main () {
         printf("Erro ao abrir %s\n", caminho);
         return 1;
     }
-    Mensagens a = leFicheiro(f,&listaMA,&listaJ,&listaB,&listaT,&listaI,&listaW);
+    MENSAGENS a = leFicheiro(f,&listaMA,&listaJ,&listaB,&listaT,&listaI,&listaW);
     fclose(f);
 
     if (a == OK) {
