@@ -259,7 +259,7 @@ void processarComando(char *buf, ESTADO *j) {
 void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck) {
     char buf[256];
     while (1) {
-        printf("%s> ", rj->jogoNome);
+        printf("%s> ", ri->jogoNome);
         if (!fgets(buf, 256, stdin)) break;
         buf[strcspn(buf, "\n")] = 0;
         if (buf[0] == 'q') break;
