@@ -40,3 +40,21 @@ typedef struct regra6 {
     struct regra6 *ant;
     struct regra6 *prox;
 } *RegrasWin;
+
+// enumeracao das feedback messages
+typedef enum {
+        OK,
+        Comando_INVALIDO,
+        Flag_INVALIDA,
+        ERRO_PILHA_INVALIDA,
+        ERRO_PILHA_VAZIA,
+        ERRO_JOGADA_INVALIDA,
+        WIN,
+        GAME_OVER
+} MENSAGENS;
+
+// estrutura para associar a numeracao com uma mensagem
+typedef struct {
+        MENSAGENS mensagem;
+        const char *feedback;
+} FEEDBACK;

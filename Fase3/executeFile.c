@@ -3,24 +3,7 @@
 #include <stdlib.h>
 #include <readFile.h>
 #include <time.h>
-
-// Simulação da inclusão das definições da Fase 1/2
-// #include <card.h> 
-
-// Caso o header não esteja disponível no path, definimos o necessário para compilação:
-// A estrutura ESTADO real deve ser definida em card.h e incluída.
-
-typedef char CARTA;
-typedef CARTA *BARALHO;
-typedef struct { 
-    CARTA **paciencia;           // Matriz dinâmica para o tabuleiro (tableau)
-    int num_pilhas;              // Quantidade de colunas/pilhas
-    int max_cartas_por_pilha;    // Capacidade máxima de cada pilha
-    CARTA fundacao; 
-    int cartas_no_baralho; 
-    int posicao_topo_do_baralho; 
-    BARALHO B; 
-} ESTADO;
+#include "executeFile.h"
 
 // ========== FUNÇÕES AUXILIARES ==========
 
