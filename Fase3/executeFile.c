@@ -14,7 +14,7 @@ void mostrarEstado(ESTADO *jogo) {
     if (jogo->paciencia != NULL) {
         imprimirTabuleiro(jogo);
     }
-    printf("\n======================================================================================\n");
+    printf("\n====================================================================================\n");
 }
 
 
@@ -357,7 +357,7 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     aplicarInit(ri, &jogo, jogo.B);
     aplicarMovAuto(rma);
     aplicarWin(rw);
-    printf("=============== REGRAS APLICADAS ===================\n\n");
+    printf("=============== REGRAS APLICADAS ==============\n\n");
     mostrarEstado(&jogo);
     loopComandos(&jogo, ri, jogo.B, rj->jogoNome);
     limparEstado(&jogo);
