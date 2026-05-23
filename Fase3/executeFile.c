@@ -6,16 +6,15 @@
 // ========== FUNÇÕES AUXILIARES ==========
 
 void mostrarEstado(ESTADO *jogo) {
-    printf("\n================ ESTADO DO JOGO ===============\n");
+    printf("\n================================= ESTADO DO JOGO ===================================\n");
     if (jogo->fundacao > 0)
         printf("Fundação atual: %s\n", card2str(jogo->fundacao));
     if (jogo->cartas_no_baralho > 0)
         printf("Cartas no Stock: %d\n", jogo->cartas_no_baralho);
     if (jogo->paciencia != NULL) {
-        printf("-----------------------------------------------\n");
         imprimirTabuleiro(jogo);
     }
-    printf("===============================================\n");
+    printf("\n======================================================================================\n");
 }
 
 
@@ -138,7 +137,6 @@ void imprimirWins(RegrasWin rw) {
     }
 }
 
-// ========== FUNÇÕES DE EXECUÇÃO DAS REGRAS ==========
 
 BARALHO criar_baralhos(RegrasBaralhos rb) {
     int n = (rb != NULL) ? rb->numeroDeBaralhos : 1;
@@ -151,9 +149,6 @@ BARALHO criar_baralhos(RegrasBaralhos rb) {
     return b;
 }
 
-/**
- * Replicado de Fase1/2_Lógica.c (baralhar)
- */
 void baralhar_generico(BARALHO b, int n_baralhos) {
     int total = 52 * n_baralhos;
     srand(time(NULL));
@@ -290,7 +285,7 @@ void limparEstado(ESTADO *jogo) {
     if (jogo->B) free(jogo->B);
 }
 
-// ========== GESTÃO DE COMANDOS (ESTILO FASE 1/2) ==========
+
 
 typedef struct {
     char tecla;
@@ -349,22 +344,20 @@ void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck, const char *no
     }
 }
 
-// ========== FUNÇÃO PRINCIPAL DE EXECUÇÃO ==========
-
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb, 
              RegrasTipo rt, RegrasInit ri, RegrasWin rw) {
 
     ESTADO jogo;
     memset(&jogo, 0, sizeof(ESTADO));
 
-    printf("\n========== APLICANDO REGRAS DO JOGO ==========\n\n");
+    printf("\n========== APLICAR REGRAS DO JOGO ==========\n\n");
     aplicarJogo(rj);
     jogo.B = aplicarBaralhos(rb);
     aplicarTipo(rt);
     aplicarInit(ri, &jogo, jogo.B);
     aplicarMovAuto(rma);
     aplicarWin(rw);
-    printf("========== REGRAS APLICADAS ==========\n\n");
+    printf("=============== REGRAS APLICADAS ===================\n\n");
     mostrarEstado(&jogo);
     loopComandos(&jogo, ri, jogo.B, rj->jogoNome);
     limparEstado(&jogo);
