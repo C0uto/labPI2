@@ -338,9 +338,14 @@ void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck, const char *no
     int continuar = 1;
     while (continuar) {
         printf("%s> ", nome_jogo);
-        if (fgets(buf, 256, stdin) == NULL) break;
-        buf[strcspn(buf, "\n")] = 0;
-        if (buf[0] != '\0') continuar = executarEntrada(buf, j, ri, originalDeck);
+        if (fgets(buf, 256, stdin) == NULL) {
+            continuar = 0;
+        } else {
+            buf[strcspn(buf, "\n")] = 0;
+            if (buf[0] != '\0') {
+                continuar = executarEntrada(buf, j, ri, originalDeck);
+            }
+        }
     }
 }
 
@@ -357,7 +362,7 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     aplicarInit(ri, &jogo, jogo.B);
     aplicarMovAuto(rma);
     aplicarWin(rw);
-    printf("=============== REGRAS APLICADAS ==============\n\n");
+    printf("============= REGRAS APLICADAS ==============\n\n");
     mostrarEstado(&jogo);
     loopComandos(&jogo, ri, jogo.B, rj->jogoNome);
     limparEstado(&jogo);

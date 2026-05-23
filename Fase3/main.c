@@ -29,6 +29,7 @@ int main () {
     char nome[100];
     printf("Escolha uma paciência: ");
     scanf("%s", nome);
+    while (getchar() != '\n'); // Limpa o buffer de entrada (consome o \n deixado pelo scanf)
     char caminho[200];
     sprintf(caminho, "paciencias/%s", nome);
     FILE *f = fopen(caminho, "r");
