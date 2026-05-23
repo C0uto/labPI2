@@ -62,4 +62,5 @@ typedef struct {
 } FEEDBACK;
 
 MENSAGENS leFicheiro(FILE *f, RegrasMovAuto *rma, RegrasJogo *rj, RegrasBaralhos *rb, RegrasTipo *rt, RegrasInit *ri, RegrasWin *rw);
+void mostrar_mensagem(MENSAGENS msg);
 
