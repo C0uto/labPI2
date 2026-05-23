@@ -230,7 +230,7 @@ void processarNoInit(RegrasInit ri, ESTADO *j, int *col_tab, BARALHO d, int *idx
     } else if (strcmp(ri->tipoDePilha, "STOCK") == 0) {
         j->posicao_topo_do_baralho = *idx;
         j->cartas_no_baralho = ri->numeroDeCartas;
-        // IMPORTANTE: Avançar o índice do baralho para não sobrepor com outras pilhas
+        // Avançar o índice do baralho para não sobrepor com outras pilhas
         (*idx) += ri->numeroDeCartas;
     }
 }

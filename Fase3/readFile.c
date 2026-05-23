@@ -2,6 +2,19 @@
 #include <stdlib.h>
 #include "readFile.h"
 
+const FEEDBACK tabela_mensagens[] = {
+        {OK, "\n"},
+        {ERRO_PILHA_INVALIDA, "Pilha invalida, tenta novamente."},
+        {ERRO_PILHA_VAZIA, "A pilha seleciona esta vazia."},
+        {ERRO_JOGADA_INVALIDA, "Jogada invalida!"},
+        {ERRO_BARALHO_VAZIO, "Nao ha mais cartas no baralho"},
+        {WIN, ">>>>>>>>>>>>PARABENS! venceu o jogo, para sair use 'q' para reiniciar use 'r'."},
+        {GAME_OVER, ">>>>> GAME OVER! para sair use 'q', para reiniciar use 'r'."},
+        {Comando_INVALIDO, "Comando invalido!"},
+        {Flag_INVALIDA, "Flag invalida!"},
+        {0, NULL}
+};
+
 void inicializarMA (RegrasMovAuto r) {
     strcpy(r->flags[0], "*+[]<>~mMxXcCdDVaAkK");
     strcpy(r->flags[1], "00000000000000000000");
