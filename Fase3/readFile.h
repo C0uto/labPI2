@@ -49,6 +49,7 @@ typedef enum {
         Flag_INVALIDA,
         ERRO_PILHA_INVALIDA,
         ERRO_PILHA_VAZIA,
+        ERRO_BARALHO_VAZIO,
         ERRO_JOGADA_INVALIDA,
         WIN,
         GAME_OVER
