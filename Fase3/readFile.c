@@ -15,6 +15,15 @@ const FEEDBACK tabela_mensagens[] = {
         {0, NULL}
 };
 
+void mostrar_mensagem(MENSAGENS cod) {
+        for(int i = 0; tabela_mensagens[i].feedback != NULL; i++) {
+                if(tabela_mensagens[i].mensagem == cod) {
+                        printf("\n%s\n", tabela_mensagens[i].feedback);
+                        return;
+                }
+        }
+}
+
 void inicializarMA (RegrasMovAuto r) {
     strcpy(r->flags[0], "*+[]<>~mMxXcCdDVaAkK");
     strcpy(r->flags[1], "00000000000000000000");
@@ -184,7 +193,7 @@ MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *
       if (coment != NULL) *coment = '\0';//vejo se o ponteiro não é null, ou seja se existe '#' e se existir coloco '\0' para apagar os comentários
       lida = sscanf(linha,"%s",temp1);
       MENSAGENS x = verificaLinhaBranco (f,rma,rj,rb,rt,ri,rw,temp1,temp2,temp3,flags_str,linha,lida);
-      if(x!=OK) return x;
+      if(x!=OK) return mostrar_mensagem(x), x;
     }
-    return OK;
+    return mostrar_mensagem(OK), OK;
 }
