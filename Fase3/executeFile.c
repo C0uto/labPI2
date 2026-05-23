@@ -101,11 +101,11 @@ void tratarBaralho(ESTADO *j) {
 
 void tratarAjuda() {
     printf("\nComandos permitidos:\n");
-    printf(" p O D - Move a carta do topo da pilha O para a pilha D\n");
-    printf(" b     - Retira uma carta do baralho para a fundação\n");
-    printf(" e     - Mostra o estado atual do jogo\n");
-    printf(" h     - Mostra esta ajuda\n");
-    printf(" q     - Sai do jogo\n");
+    printf(" p Origem Destino [Numero de Cartas] - Move o numero de cartas especificado da pilha Origem para a pilha Destino\n");
+    printf(" b - Retira uma carta do baralho para a fundação, caso exista baralho\n");
+    printf(" e - Mostra o estado atual do jogo\n");
+    printf(" h - Mostra os comandos permitidos\n");
+    printf(" q - Sai do jogo\n");
 }
 
 
