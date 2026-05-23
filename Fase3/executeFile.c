@@ -6,7 +6,7 @@
 // ========== FUNÇÕES AUXILIARES ==========
 
 void mostrarEstado(ESTADO *jogo) {
-    printf("\n================================= ESTADO DO JOGO ===================================\n");
+    printf("\n================================= ESTADO DO JOGO ===================================\n\n");
     if (jogo->fundacao > 0)
         printf("Fundação atual: %s\n", card2str(jogo->fundacao));
     if (jogo->cartas_no_baralho > 0)
