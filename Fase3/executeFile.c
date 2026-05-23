@@ -36,14 +36,22 @@ void imprimirLinha(ESTADO *j, int lin) {
     printf("\n");
 }
 
+void imprimirCabecalho(int n) {
+    for (int col = 0; col < n; col++) {
+        printf(" [%d]\t", col + 1);
+    }
+    printf("\n");
+}
+
 void imprimirTabuleiro(ESTADO *j) {
     if (!j->paciencia) return;
+    imprimirCabecalho(j->num_pilhas);
     for (int lin = 0; lin < j->max_cartas_por_pilha; lin++) {
-        int tem_carta = 0;
+        int tem = 0;
         for (int col = 0; col < j->num_pilhas; col++) {
-            if (j->paciencia[col][lin] > 0) tem_carta = 1;
+            if (j->paciencia[col][lin] > 0) tem = 1;
         }
-        if (!tem_carta) break;
+        if (!tem) break;
         imprimirLinha(j, lin);
     }
 }
@@ -54,41 +62,31 @@ int getPilhaTamanho(ESTADO *j, int col) {
     return i;
 }
 
-void tratarPilha(char *input, ESTADO *j) {
-    int pilhaOrigem, pilhaDestino, numCartas;
-    char char_dummy; // Variável auxiliar para absorver a letra 'p'
-
-    // Tenta ler até 4 argumentos (p, origem, destino, quantidade)
-    int lidos = sscanf(input, " %c %d %d %d", &char_dummy, &pilhaOrigem, &pilhaDestino, &numCartas);
-
-    if (lidos >= 3) {
-        // Se não colocar número de cartas, o seu valor será 1
-        if (lidos == 3) numCartas = 1;
-
-        int o = pilhaOrigem - 1; // Ajuste para índice 0
-        int d = pilhaDestino - 1;
-
-        if (o < 0 || o >= j->num_pilhas || d < 0 || d >= j->num_pilhas) {
-            printf("Pilha inválida, tenta novamente.\n");
-            return;
-        }
-
-        int to = getPilhaTamanho(j, o);
-        int td = getPilhaTamanho(j, d);
-
-        // Valida se a origem tem cartas suficientes e se o destino tem espaço
-        if (numCartas > 0 && to >= numCartas && (td + numCartas) <= j->max_cartas_por_pilha) {
-            for (int i = 0; i < numCartas; i++) {
-                j->paciencia[d][td + i] = j->paciencia[o][to - numCartas + i];
-                j->paciencia[o][to - numCartas + i] = 0;
-            }
-            mostrarEstado(j);
-        } else {
-            printf("Jogada inválida!\n");
-        }
-    } else {
-        printf("Comando incompleto! Tenta o formato: p <origem> <destino> [<cartas>]\n");
+void moverCartas(ESTADO *j, int o, int d, int n) {
+    int to = getPilhaTamanho(j, o);
+    int td = getPilhaTamanho(j, d);
+    for (int i = 0; i < n; i++) {
+        j->paciencia[d][td + i] = j->paciencia[o][to - n + i];
+        j->paciencia[o][to - n + i] = 0;
     }
+    mostrarEstado(j);
+}
+
+void tratarPilha(char *input, ESTADO *j) {
+    int o_idx, d_idx, n = 1; 
+    char dummy;
+    int res = sscanf(input, " %c %d %d %d", &dummy, &o_idx, &d_idx, &n);
+    if (res < 3) {
+        printf("Comando incompleto! Tenta o formato: p <origem> <destino> [<cartas>]\n");
+        return;
+    }
+    int o = o_idx - 1, d = d_idx - 1;
+    int to = getPilhaTamanho(j, o);
+    if (o < 0 || o >= j->num_pilhas || d < 0 || d >= j->num_pilhas || to < n || n <= 0) {
+        printf("Jogada inválida!\n");
+        return;
+    }
+    moverCartas(j, o, d, n);
 }
 
 void tratarBaralho(ESTADO *j) {
@@ -197,24 +195,22 @@ int encontrarMaxCartasInit(RegrasInit ri) {
     return max;
 }
 
-void alocarTabuleiro(ESTADO *jogo, int n_pilhas, int max_cartas) {
+void limparTabuleiro(ESTADO *j) {
+    if (j->paciencia == NULL) return;
+    for (int i = 0; i < j->num_pilhas; i++) free(j->paciencia[i]);
+    free(j->paciencia);
+    j->paciencia = NULL;
+}
+
+void alocarTabuleiro(ESTADO *j, int n_pilhas, int max_cartas) {
     if (n_pilhas <= 0) return;
-    // Libertar memória se já existir tabuleiro (evita leak no reset)
-    if (jogo->paciencia != NULL) {
-        for (int i = 0; i < jogo->num_pilhas; i++) {
-            free(jogo->paciencia[i]);
-        }
-        free(jogo->paciencia);
-    }
-    
-    jogo->num_pilhas = n_pilhas;
-    // Definimos uma altura generosa: o máximo inicial + 15 para movimentos
-    jogo->max_cartas_por_pilha = max_cartas + 15; 
-    
-    jogo->paciencia = malloc(jogo->num_pilhas * sizeof(CARTA *));
-    for (int i = 0; i < jogo->num_pilhas; i++) {
-        jogo->paciencia[i] = calloc(jogo->max_cartas_por_pilha, sizeof(CARTA));
-        if (!jogo->paciencia[i]) exit(EXIT_FAILURE);
+    limparTabuleiro(j);
+    j->num_pilhas = n_pilhas;
+    j->max_cartas_por_pilha = max_cartas + 15;
+    j->paciencia = malloc(n_pilhas * sizeof(CARTA *));
+    for (int i = 0; i < n_pilhas; i++) {
+        j->paciencia[i] = calloc(j->max_cartas_por_pilha, sizeof(CARTA));
+        if (!j->paciencia[i]) exit(EXIT_FAILURE);
     }
 }
 
@@ -331,27 +327,25 @@ void processarComando(char *buf, ESTADO *j) {
     }
 }
 
+int executarEntrada(char *buf, ESTADO *j, RegrasInit ri, BARALHO deck) {
+    if (buf[0] == 'q') return 0;
+    if (buf[0] == 'r') {
+        aplicarInit(ri, j, deck);
+        mostrarEstado(j);
+    } else {
+        processarComando(buf, j);
+    }
+    return 1;
+}
+
 void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck, const char *nome_jogo) {
     char buf[256];
     int continuar = 1;
-
     while (continuar) {
         printf("%s> ", nome_jogo);
-        if (fgets(buf, 256, stdin) == NULL) {
-            continuar = 0;
-        } else {
-            buf[strcspn(buf, "\n")] = 0;
-            if (buf[0] != '\0') {
-                if (buf[0] == 'q') {
-                    continuar = 0;
-                } else if (buf[0] == 'r') {
-                    aplicarInit(ri, j, originalDeck);
-                    mostrarEstado(j);
-                } else {
-                    processarComando(buf, j);
-                }
-            }
-        }
+        if (fgets(buf, 256, stdin) == NULL) break;
+        buf[strcspn(buf, "\n")] = 0;
+        if (buf[0] != '\0') continuar = executarEntrada(buf, j, ri, originalDeck);
     }
 }
 
