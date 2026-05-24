@@ -1152,14 +1152,13 @@ int restaurarSnapshot(ESTADO *j) {
  */
 void tratarAjuda(void) {
     printf("\nComandos:\n");
-    printf("  p <o> <d> [n] - Move n cartas (default 1) da pilha o para d\n");
+    printf("  p <origem> <destino> [n] - Move n cartas (default 1) da pilha oirgem para a pilha destino\n");
     printf("  u             - Desfaz a ultima jogada (undo)\n");
     printf("  e             - Mostra o estado actual\n");
     printf("  s             - Grava o jogo\n");
-    printf("  l             - Carrega jogo gravado\n");
-    printf("  r             - Reinicia\n");
-    printf("  h             - Esta ajuda\n");
-    printf("  q             - Sair\n");
+    printf("  r             - Reinicia o jogo\n");
+    printf("  h             - Mostra esta ajuda\n");
+    printf("  q             - Sair do jogo\n");
 }
 
 /**
