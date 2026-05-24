@@ -85,7 +85,7 @@ void moverCartas(ESTADO *j, int o, int d, int n, RegrasMovAuto rma) {
     mostrarEstado(j);
 }
 
-static void moverParaDescarte(ESTADO *j, int o, int to, RegrasMovAuto rma) {
+void moverParaDescarte(ESTADO *j, int o, int to, RegrasMovAuto rma) {
     if (existeRegraMov(rma, "TAB", "DESCARTE") || existeRegraMov(rma, "TAB", "FUND")) {
         j->fundacao = j->paciencia[o][to - 1];
         j->paciencia[o][to - 1] = 0;
@@ -95,7 +95,7 @@ static void moverParaDescarte(ESTADO *j, int o, int to, RegrasMovAuto rma) {
     }
 }
 
-static void moverParaPilha(ESTADO *j, int o, int to, int d_idx, int n, RegrasMovAuto rma) {
+void moverParaPilha(ESTADO *j, int o, int to, int d_idx, int n, RegrasMovAuto rma) {
     if (!existeRegraMov(rma, "TAB", "TAB")) {
         printf("Não é permitido mover cartas entre colunas.\n");
         return;
@@ -108,32 +108,27 @@ static void moverParaPilha(ESTADO *j, int o, int to, int d_idx, int n, RegrasMov
     moverCartas(j, o, d, n, rma);
 }
 
-static int contarSequencia(ESTADO *j, int col) {
-    int t = getPilhaTamanho(j, col);
+int contarSequencia(ESTADO *j, int col) {
+    int t = getPilhaTamanho(j, col), seq = 1;
     if (t < 13 || (j->paciencia[col][t - 1] - 1) % 13 != 0) return 0;
-    int seq = 1;
-    while (seq < 13) {
-        CARTA atual = j->paciencia[col][t - seq];
-        CARTA anterior = j->paciencia[col][t - seq - 1];
-        if (anterior != atual + 1 || (atual - 1) / 13 != (anterior - 1) / 13) break;
+    while (seq < 13 && j->paciencia[col][t - seq - 1] == j->paciencia[col][t - seq] + 1 &&
+           (j->paciencia[col][t - seq] - 1) / 13 == (j->paciencia[col][t - seq - 1] - 1) / 13)
         seq++;
-    }
     return seq;
 }
 
-static void processarAuto(ESTADO *j, RegrasMovAuto rma) {
-    RegrasMovAuto aux = rma;
-    while (aux && strcmp(aux->comando, "AUTO") != 0) aux = aux->prox;
-    if (!aux) return;
+void removerSequencia(ESTADO *j, int i) {
+    int t = getPilhaTamanho(j, i);
+    j->fundacao = j->paciencia[i][t - 13];
+    for (int k = 0; k < 13; k++) j->paciencia[i][t - 1 - k] = 0;
+    mostrarEstado(j);
+}
+
+void processarAuto(ESTADO *j, RegrasMovAuto rma) {
+    while (rma && strcmp(rma->comando, "AUTO") != 0) rma = rma->prox;
+    if (rma == NULL) return;
     for (int i = 0; i < j->num_pilhas; i++) {
-        if (contarSequencia(j, i) == 13) {
-            int t = getPilhaTamanho(j, i);
-            j->fundacao = j->paciencia[i][t - 13];
-            for (int k = 0; k < 13; k++) j->paciencia[i][t - 1 - k] = 0;
-            printf("\n[AUTO] Sequência completa (K a A) movida para a fundação!\n");
-            mostrarEstado(j);
-            break; 
-        }
+        if (contarSequencia(j, i) == 13) removerSequencia(j, i);
     }
 }
 
