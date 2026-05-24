@@ -227,7 +227,7 @@ int abrirPastaImprime (char *nome) {
     struct dirent *dir;
     while ((dir = readdir(d)) != NULL) {
         int len = strlen(dir->d_name);
-        if (len > 4 && strcmp(dir->d_name + len - 4, ".txt") == 0)
+        if (len >= 4 && strcmp(dir->d_name + len - 4, ".txt") == 0)
         printf("%s\n", dir->d_name);
     }
     closedir(d);

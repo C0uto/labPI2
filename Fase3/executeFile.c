@@ -671,7 +671,7 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     int n_baralhos = (rb) ? rb->numeroDeBaralhos : 1;
     if (n_baralhos < 1) n_baralhos = 1;
     jogo.B = criarBaralho(n_baralhos);
-    jogo.total_cartas_baralho = 52 * rb->numeroDeBaralhos;
+    jogo.total_cartas_baralho = 52 * n_baralhos;
     baralharBaralho(jogo.B, rb->numeroDeBaralhos);
 
     printf("Movimentos validos:\n"); imprimirMovs(rma);
