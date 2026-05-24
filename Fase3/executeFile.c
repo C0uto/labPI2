@@ -111,7 +111,13 @@ void tratarAjuda() {
 
 void imprimirTipos(RegrasTipo rt) {
     while (rt != NULL) {
-        printf("   - TIPO %s %s\n", rt->tipoDePilha, rt->flags[0]);
+        printf("   - TIPO %s ", rt->tipoDePilha);
+        for (int i = 0; rt->flags[0][i] != '\0'; i++) {
+            if (rt->flags[1][i] == '1') {
+                printf("%c", rt->flags[0][i]);
+            }
+        }
+        printf("\n");
         rt = rt->prox;
     }
 }
@@ -125,7 +131,13 @@ void imprimirInits(RegrasInit ri) {
 
 void imprimirMovs(RegrasMovAuto rma) {
     while (rma != NULL) {
-        printf("   - %s %s %s %s\n", rma->comando, rma->origem, rma->destino, rma->flags[0]);
+        printf("   - %s %s %s ", rma->comando, rma->origem, rma->destino);
+        for (int i = 0; rma->flags[0][i] != '\0'; i++) {
+            if (rma->flags[1][i] == '1') {
+                printf("%c", rma->flags[0][i]);
+            }
+        }
+        printf("\n");
         rma = rma->prox;
     }
 }
