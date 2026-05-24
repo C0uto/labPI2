@@ -620,7 +620,7 @@ void loopComandos(ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
     char buf[256];
     int continuar = 1;
     int input_ok = 1;
-    while (continuar) {
+    while (continuar && input_ok) {
         const char *display_nome = (nome) ? nome : "Paciencia";
         printf("%s> ", display_nome);
         if (fgets(buf, 256, stdin) == NULL) {
@@ -630,7 +630,6 @@ void loopComandos(ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
             if (buf[0] != '\0')
                 continuar = executarComando(buf, j, rma, ri, rb, rw, nome);
         }
-        if (!input_ok) break; // Sai do loop se não houver mais entrada
     }
 }
 
