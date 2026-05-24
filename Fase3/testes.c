@@ -71,7 +71,7 @@ void test_seq_desc_cresc(void) {
     pushCarta(&j.pilhas[0], 2); /* 2S */
     CU_ASSERT_FALSE(validarFlagDescrescente(&j.pilhas[0], 2, &r));
     CU_ASSERT_TRUE(validarFlagCrescente(&j.pilhas[0], 2, &r));
-    limparEstado(&j);
+    limparEstadoTeste(&j);
 }
 
 void test_seq_atributos(void) {
@@ -87,7 +87,7 @@ void test_seq_atributos(void) {
     CU_ASSERT_TRUE(validarFlagCoresAlternadas(&j.pilhas[0], 2, &r));
     CU_ASSERT_FALSE(validarSequencia(&j.pilhas[0], 2, &r));
     
-    limparEstado(&j);
+    limparEstadoTeste(&j);
 }
 
 /* ============================================================
@@ -107,7 +107,7 @@ void test_dest_valores(void) {
     CU_ASSERT_FALSE(validarFlagMaior(&j.pilhas[0], &j.pilhas[1], 1, &r));
     CU_ASSERT_TRUE(validarFlagTil(&j.pilhas[0], &j.pilhas[1], 1, &r));
     CU_ASSERT_FALSE(validarFlagsBasicas(&j.pilhas[0], &j.pilhas[1], 1, &r));
-    limparEstado(&j);
+    limparEstadoTeste(&j);
 }
 
 void test_dest_atributos(void) {
@@ -122,7 +122,7 @@ void test_dest_atributos(void) {
     CU_ASSERT_FALSE(validarFlagC(&j.pilhas[0], &j.pilhas[1], 1, &r));
     CU_ASSERT_TRUE(validarFlagD(&j.pilhas[0], &j.pilhas[1], 1, &r));
     CU_ASSERT_FALSE(validarFlagsAtributos(&j.pilhas[0], &j.pilhas[1], 1, &r));
-    limparEstado(&j);
+    limparEstadoTeste(&j);
 }
 
 void test_dest_ranks(void) {
@@ -138,7 +138,7 @@ void test_dest_ranks(void) {
     
     prepRegra(&r, "*", "1");
     CU_ASSERT_TRUE(validarDestino(&j.pilhas[0], &j.pilhas[1], 1, &r));
-    limparEstado(&j);
+    limparEstadoTeste(&j);
 }
 
 /* ============================================================
@@ -160,7 +160,7 @@ void test_movimentos_e_tipos(void) {
     CU_ASSERT_EQUAL(j.pilhas[0].tamanho, 0);
     CU_ASSERT_EQUAL(j.pilhas[1].tamanho, 1);
     CU_ASSERT_FALSE(tentarMover(&j, 0, 1, 1, &r, NULL)); /* Já está vazia */
-    limparEstado(&j);
+    limparEstadoTeste(&j);
 }
 
 void test_processar_auto(void) {
@@ -176,7 +176,7 @@ void test_processar_auto(void) {
     CU_ASSERT_TRUE(tentarAutoEntrePilhas(&j, &r, 0, 1, NULL)); /* Já n é validado V, mas força exec */
     processarAuto(&j, &r, NULL);
     CU_ASSERT_EQUAL(j.pilhas[0].tamanho, 1); /* Loop parou pq falhou regra V */
-    limparEstado(&j);
+    limparEstadoTeste(&j);
 }
 
 void test_vitoria(void) {
@@ -192,7 +192,7 @@ void test_vitoria(void) {
     
     rw.condicaoWin = 5; /* Fictício: precisa de 5, só tem 1 */
     CU_ASSERT_FALSE(verificarWin(&j, &rw));
-    limparEstado(&j);
+    limparEstadoTeste(&j);
 }
 
 /* ============================================================
