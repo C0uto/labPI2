@@ -12,7 +12,7 @@
  * Funcao para imprimir no terminal a lista de comandos disponiveis
  *
  */
-void tratarAjuda(void) {
+void comandoH(void) {
     printf("\nComandos:\n");
     printf("  p <origem> <destino> [n] - Move n cartas (default 1) da pilha oirgem para a pilha destino\n");
     printf("  u             - Desfaz a ultima jogada (undo)\n");
@@ -31,7 +31,7 @@ void tratarAjuda(void) {
  * * @param rma -> Regras de movimento
  * * @param rw -> Regras de vitoria
  */
-void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
+void comandoP(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
     int o, d, n = 1;
     if (sscanf(buf, " p %d %d %d", &o, &d, &n) < 2) {
         printf("Uso: p <origem> <destino> [n]\n");
@@ -54,7 +54,7 @@ void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
 
 
 /**
- * Funcao para tratar comandos de sistema (save, load, reset)
+ * Funcao para tratar comandos de sistema (save, reset)
  *
  * * @param c -> Carater do comando
  * * @param j -> Estado
@@ -62,7 +62,7 @@ void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
  * * @param n -> Nome da paciencia
  * * @return res -> 1 para continuar o programa
  */
-int acaoSistema(char c, ESTADO *j, RegrasInit ri, const char *n) {
+int comandoSR(char c, ESTADO *j, RegrasInit ri, const char *n) {
     if (c == 's') gravarJogo(j, n);
     else if (c == 'r') { aplicarInitAoEstado(j, ri, j->B); mostrarEstado(j); }
     return 1;
@@ -73,7 +73,7 @@ int acaoSistema(char c, ESTADO *j, RegrasInit ri, const char *n) {
  *
  * * @param j -> Estado do jogo
  */
-void tratarUndo(ESTADO *j) {
+void comandoU(ESTADO *j) {
     if (restaurarSnapshot(j)) mostrarEstado(j);
 }
 
@@ -93,11 +93,11 @@ int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
                     RegrasBaralhos rb, RegrasWin rw, const char *nome) {
     char c = buf[0];
     if (c == 'q') return 0;
-    if (c == 'h') tratarAjuda();
+    if (c == 'h') comandoH();
     else if (c == 'e') mostrarEstado(j);
-    else if (c == 'p') tratarMover(buf, j, rma, rw);
-    else if (c == 'u') tratarUndo(j);
-    else if (strchr("sr", c)) acaoSistema(c, j, ri, nome);
+    else if (c == 'p') comandoP(buf, j, rma, rw);
+    else if (c == 'u') comandoU(j);
+    else if (strchr("sr", c)) comandoSR(c, j, ri, nome);
     else printf("Comando desconhecido.\n");
     return 1;
 }

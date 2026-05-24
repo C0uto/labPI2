@@ -591,7 +591,7 @@ int condicaoWinSatisfeita(ESTADO *j, RegrasWin rw) {
  * * @param rw -> Lista de regras de vitoria
  * * @return res -> 1 se o jogador venceu
  */
-int verificarVitoria(ESTADO *j, RegrasWin rw) {
+int verificarWin(ESTADO *j, RegrasWin rw) {
     RegrasWin aux = rw;
     while (aux != NULL) {
         if (!condicaoWinSatisfeita(j, aux)) return 0;

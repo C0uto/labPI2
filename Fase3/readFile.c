@@ -396,7 +396,7 @@ CONTEXTO inicializarContexto(void) {
  * * @return res -> 1 se leu com sucesso, 0 caso contrario
  *
  */
-int lerNomePacienciaDoSave(char *nome_paciencia) {
+int lerNomeDoJogoDoSave(char *nome_paciencia) {
     FILE *f = fopen("save.txt", "r");
     if (!f) return 0;
     char linha[200];
@@ -413,7 +413,7 @@ int lerNomePacienciaDoSave(char *nome_paciencia) {
  * * @param d -> Ponteiro para o diretorio aberto
  *
  */
-static void printPacienciaFiles(DIR *d) {
+static void listarFicheirosPaciencia(DIR *d) {
     struct dirent *dir;
     while ((dir = readdir(d)) != NULL) {
         int len = strlen(dir->d_name);
@@ -426,7 +426,7 @@ static void printPacienciaFiles(DIR *d) {
  * Funcao auxiliar para verificar se existe um jogo guardado e informar o utilizador
  *
  */
-static void checkAndPrintSaveFile(void) {
+static void temFicheiroSave(void) {
     FILE *sv = fopen("save.txt", "r");
     if (sv) {
         printf("save.txt\n");
@@ -448,9 +448,9 @@ int abrirPastaImprime(char *nome, int *carregar_save) {
         printf("Erro: pasta 'paciencias' nao encontrada.\n");
         return 1;
     }
-    printPacienciaFiles(d);
+    listarFicheirosPaciencia(d);
     closedir(d);
-    checkAndPrintSaveFile();
+    temFicheiroSave();
     printf("Escolha uma paciencia (ou save.txt para carregar jogo gravado): ");
     scanf("%s", nome);
     while (getchar() != '\n');
@@ -468,7 +468,7 @@ int abrirPastaImprime(char *nome, int *carregar_save) {
  */
 int carregarNome(char *nome, int *carregar_save) {
     if (abrirPastaImprime(nome, carregar_save)) return 1;
-    if (*carregar_save && !lerNomePacienciaDoSave(nome)) {
+    if (*carregar_save && !lerNomeDoJogoDoSave(nome)) {
         printf("Erro: nao foi possivel ler o nome da paciencia do save.txt\n");
         return 1;
     }

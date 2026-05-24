@@ -11,7 +11,7 @@
  * * @param t -> Nome do tipo de pilha
  * * @return res -> 1 se for superior (FUND, DESCARTE, CELL), 0 caso contrario
  */
-int ehGrupoSuperior(const char *t) {
+int eGrupoSuperior(const char *t) {
     if (strcmp(t, "FUND") == 0 || strcmp(t, "DESCARTE") == 0) return 1;
     return (strcmp(t, "CELL") == 0);
 }
@@ -26,7 +26,7 @@ int ehGrupoSuperior(const char *t) {
 int maxAltura(ESTADO *j, int sup) {
     int m = 0;
     for (int i = 0; i < j->num_pilhas; i++) {
-        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup && j->pilhas[i].tamanho > m)
+        if (eGrupoSuperior(j->pilhas[i].tipo) == sup && j->pilhas[i].tamanho > m)
             m = j->pilhas[i].tamanho;
     }
     return m;
@@ -42,7 +42,7 @@ int maxAltura(ESTADO *j, int sup) {
 int printCabecalho(ESTADO *j, int sup) {
     int c = 0;
     for (int i = 0; i < j->num_pilhas; i++) {
-        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) {
+        if (eGrupoSuperior(j->pilhas[i].tipo) == sup) {
             printf(" [%2d:%-8s] ", i + 1, j->pilhas[i].tipo);
             c++;
         }
@@ -103,7 +103,7 @@ void printCelula(ESTADO *j, int i, int lin) {
  */
 void printLinha(ESTADO *j, int lin, int sup) {
     for (int i = 0; i < j->num_pilhas; i++) {
-        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup)
+        if (eGrupoSuperior(j->pilhas[i].tipo) == sup)
             printCelula(j, i, lin);
     }
     printf("\n");
