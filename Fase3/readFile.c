@@ -191,12 +191,11 @@ MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *
     char temp3[200];
     char linha[256];
     char flags_str[50];
-    int lida = 0;
     MENSAGENS x = OK;
     while(fgets(linha,256,f)!=NULL) {
       char *coment = strchr(linha, '#');//o strchr procura a primeira ocorrência do caractere # dentro da string. Se encontrar, devolve um ponteiro para essa posição dentro da própria string.
       if (coment != NULL) *coment = '\0';//vejo se o ponteiro não é null, ou seja se existe '#' e se existir coloco '\0' para apagar os comentários
-      lida = sscanf(linha,"%s",temp1);
+      int lida = sscanf(linha,"%s",temp1);
       x = verificaLinhaBranco (x,f,rma,rj,rb,rt,ri,rw,temp1,temp2,temp3,flags_str,linha,lida);
       if(x!=OK) return mostrar_mensagem(x), x;
     }
