@@ -43,15 +43,20 @@ void imprimirCabecalho(int n) {
 }
 
 void imprimirTabuleiro(ESTADO *j) {
-    if (!j->paciencia) return;
+    if (j->paciencia == NULL) return;
     imprimirCabecalho(j->num_pilhas);
-    for (int lin = 0; lin < j->max_cartas_por_pilha; lin++) {
-        int tem = 0;
-        for (int col = 0; col < j->num_pilhas; col++) {
-            if (j->paciencia[col][lin] > 0) tem = 1;
+    int lin = 0, continuar = 1;
+    while (lin < j->max_cartas_por_pilha && continuar) {
+        int col = 0, tem_carta = 0;
+        while (col < j->num_pilhas) {
+            if (j->paciencia[col][lin] > 0) tem_carta = 1;
+            col++;
         }
-        if (!tem) break;
-        imprimirLinha(j, lin);
+        if (tem_carta) {
+            imprimirLinha(j, lin++);
+        } else {
+            continuar = 0;
+        }
     }
 }
 
