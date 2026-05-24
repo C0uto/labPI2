@@ -270,25 +270,14 @@ int validarDestino(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
  * ============================================================ */
 
 int validarMovimento(ESTADO *j, int io, int id, int n, RegrasMovAuto rma) {
-    if (io < 0 || io >= j->num_pilhas || id < 0 || id >= j->num_pilhas || io == id) 
-        return 0;
-    PILHA *ori = &j->pilhas[io];
-    PILHA *des = &j->pilhas[id];
-
-    // Iterar por todas as regras para o par origem-destino
-    RegrasMovAuto aux = rma;
-    while (aux != NULL) {
-        if (strcmp(aux->comando, "MOV") == 0 &&
-            strcmp(aux->origem,  ori->tipo)   == 0 &&
-            strcmp(aux->destino, des->tipo)   == 0) {
-            // Se esta regra específica valida o movimento, retorna verdadeiro
-            if (ori->tamanho >= n && n > 0 && validarSequencia(ori, n, aux) && validarDestino(ori, des, n, aux)) {
+    if (io < 0 || io >= j->num_pilhas || id < 0 || id >= j->num_pilhas || io == id || n <= 0) return 0;
+    PILHA *o = &j->pilhas[io], *d = &j->pilhas[id];
+    for (RegrasMovAuto r = rma; r; r = r->prox) {
+        if (!strcmp(r->comando, "MOV") && !strcmp(r->origem, o->tipo) && !strcmp(r->destino, d->tipo))
+            if (o->tamanho >= n && validarSequencia(o, n, r) && validarDestino(o, d, n, r))
                 return 1;
-            }
-        }
-        aux = aux->prox;
     }
-    return 0; // Nenhuma regra validou o movimento
+    return 0;
 }
 
 /* ============================================================
@@ -427,6 +416,7 @@ int carregarJogo(ESTADO *j) {
     if (!f) { printf("Sem ficheiro de save.\n"); return 0; }
     char b[512];
     fgets(b, 512, f); /* skip name */
+    if (fgets((char[512]){0}, 512, f) == NULL); /* Ignora a primeira linha (nome) */
     for (int i = 0; i < j->num_pilhas; i++) processarLinhaSave(j, i, f);
     fclose(f);
     return 1;
