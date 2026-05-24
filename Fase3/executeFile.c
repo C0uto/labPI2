@@ -1,24 +1,665 @@
-/**
- * @file executeFile.c
- * @brief Implementação do loop principal e dos comandos do utilizador.
- *
- * Coordena carta, logica, estado e display.
- * Cada comando do utilizador é tratado por uma função dedicada,
- * mantendo a complexidade ciclomática abaixo de 10.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "executeFile.h"
 
 /* ============================================================
- *  COMANDOS DO UTILIZADOR
+ *  CONVERSÃO CARTA <-> STRING
  * ============================================================ */
 
-/**
- * @brief Apresenta a lista de comandos disponíveis.
- */
+void card2str(CARTA card, char *buf) {
+    const char *valor = "A23456789TJQK";
+    const char *naipe = "SHDC";
+    if (card == 0 || !buf) { if (buf) buf[0] = '\0'; return; }
+    int v = (card - 1) % 13;
+    int n = (card - 1) / 13;
+    buf[0] = valor[v];
+    buf[1] = naipe[n];
+    buf[2] = '\0';
+}
+
+CARTA str2card(const char *s) {
+    if (!s || !s[0]) return 0;
+    int v, off;
+    if (s[0] == '1' && s[1] == '0') { v = 9; off = 2; }
+    else {
+        const char *v_p = strchr("A23456789TJQK", s[0]);
+        v = v_p ? (int)(v_p - "A23456789TJQK") : -1;
+        off = 1;
+    }
+    const char *s_p = strchr("SHDC", s[off]);
+    int n = s_p ? (int)(s_p - "SHDC") : -1;
+    return (v >= 0 && n >= 0) ? n * 13 + v + 1 : 0;
+}
+
+/* ============================================================
+ *  PROPRIEDADES DE CARTA
+ * ============================================================ */
+
+int getValor(CARTA c) { return (c <= 0) ? 0 : ((c - 1) % 13) + 1; }
+int getNaipe(CARTA c) { return (c <= 0) ? -1 : (c - 1) / 13; }
+int getCor(CARTA c)   {
+    int n = getNaipe(c);
+    /* S=0(preto), H=1(vermelho), D=2(vermelho), C=3(preto) */
+    return (n == 1 || n == 2) ? 1 : 0;
+}
+
+/* ============================================================
+ *  OPERAÇÕES SOBRE PILHAS
+ * ============================================================ */
+
+int getPilhaTamanho(PILHA *p) { return p->tamanho; }
+
+void pushCarta(PILHA *p, CARTA c) {
+    if (p->tamanho >= p->capacidade) {
+        p->capacidade += 16;
+        p->cartas = realloc(p->cartas, p->capacidade * sizeof(CARTA));
+    }
+    p->cartas[p->tamanho++] = c;
+}
+
+CARTA popCarta(PILHA *p) {
+    if (p->tamanho <= 0) return 0;
+    return p->cartas[--p->tamanho];
+}
+
+CARTA topoCarta(PILHA *p) {
+    if (p->tamanho <= 0) return 0;
+    return p->cartas[p->tamanho - 1];
+}
+
+/* ============================================================
+ *  ACESSO A FLAGS
+ * ============================================================ */
+
+int temFlag(RegrasMovAuto r, char f) {
+    if (!r) return 0;
+    for (int i = 0; r->flags[0][i] != '\0'; i++)
+        if (r->flags[0][i] == f && r->flags[1][i] == '1') return 1;
+    return 0;
+}
+
+/* ============================================================
+ *  ENCONTRAR REGRA MOV/AUTO
+ * ============================================================ */
+
+RegrasMovAuto encontrarRegra(RegrasMovAuto rma, const char *ori, const char *des) {
+    RegrasMovAuto aux = rma;
+    while (aux != NULL) {
+        if (strcmp(aux->comando, "MOV") == 0 &&
+            strcmp(aux->origem,  ori)   == 0 &&
+            strcmp(aux->destino, des)   == 0)
+            return aux;
+        aux = aux->prox;
+    }
+    return NULL;
+}
+
+/* ============================================================
+ *  VALIDAÇÃO DA SEQUÊNCIA A MOVER (flags sobre as cartas em si)
+ * ============================================================ */
+
+/* Valida flag '+': sem ela só se move 1 carta */
+int validarFlagMais(int n, RegrasMovAuto r) {
+    if (n > 1 && !temFlag(r, '+')) return 0;
+    return 1;
+}
+
+/* Valida flag '[': sequência decrescente por valores consecutivos */
+int validarFlagDescrescente(PILHA *ori, int n, RegrasMovAuto r) {
+    if (!temFlag(r, '[')) return 1;
+    int base = ori->tamanho - n;
+    for (int i = 0; i < n - 1; i++) {
+        if (getValor(ori->cartas[base + i]) != getValor(ori->cartas[base + i + 1]) + 1)
+            return 0;
+    }
+    return 1;
+}
+
+/* Valida flag ']': sequência crescente por valores consecutivos */
+int validarFlagCrescente(PILHA *ori, int n, RegrasMovAuto r) {
+    if (!temFlag(r, ']')) return 1;
+    int base = ori->tamanho - n;
+    for (int i = 0; i < n - 1; i++) {
+        if (getValor(ori->cartas[base + i]) != getValor(ori->cartas[base + i + 1]) - 1)
+            return 0;
+    }
+    return 1;
+}
+
+/* Valida flag 'm': todas as cartas a mover têm o mesmo naipe */
+int validarFlagMesmoNaipe(PILHA *ori, int n, RegrasMovAuto r) {
+    if (!temFlag(r, 'm')) return 1;
+    int base = ori->tamanho - n;
+    int naipe = getNaipe(ori->cartas[base]);
+    for (int i = 1; i < n; i++)
+        if (getNaipe(ori->cartas[base + i]) != naipe) return 0;
+    return 1;
+}
+
+/* Valida flag 'x': naipes alternados na sequência */
+int validarFlagNaipesAlternados(PILHA *ori, int n, RegrasMovAuto r) {
+    if (!temFlag(r, 'x')) return 1;
+    int base = ori->tamanho - n;
+    for (int i = 0; i < n - 1; i++)
+        if (getNaipe(ori->cartas[base + i]) == getNaipe(ori->cartas[base + i + 1])) return 0;
+    return 1;
+}
+
+/* Valida flag 'c': todas as cartas a mover têm a mesma cor */
+int validarFlagMesmaCor(PILHA *ori, int n, RegrasMovAuto r) {
+    if (!temFlag(r, 'c')) return 1;
+    int base = ori->tamanho - n;
+    int cor = getCor(ori->cartas[base]);
+    for (int i = 1; i < n; i++)
+        if (getCor(ori->cartas[base + i]) != cor) return 0;
+    return 1;
+}
+
+/* Valida flag 'd': cores alternadas na sequência */
+int validarFlagCoresAlternadas(PILHA *ori, int n, RegrasMovAuto r) {
+    if (!temFlag(r, 'd')) return 1;
+    int base = ori->tamanho - n;
+    for (int i = 0; i < n - 1; i++)
+        if (getCor(ori->cartas[base + i]) == getCor(ori->cartas[base + i + 1])) return 0;
+    return 1;
+}
+
+/* Agrupa todas as validações da sequência */
+int validarSequencia(PILHA *ori, int n, RegrasMovAuto r) {
+    if (!validarFlagMais(n, r))                  return 0;
+    if (!validarFlagDescrescente(ori, n, r))      return 0;
+    if (!validarFlagCrescente(ori, n, r))         return 0;
+    if (!validarFlagMesmoNaipe(ori, n, r))        return 0;
+    if (!validarFlagNaipesAlternados(ori, n, r))  return 0;
+    if (!validarFlagMesmaCor(ori, n, r))          return 0;
+    if (!validarFlagCoresAlternadas(ori, n, r))   return 0;
+    return 1;
+}
+
+/* ============================================================
+ *  VALIDAÇÃO RELATIVA AO DESTINO
+ * ============================================================ */
+
+/* Carta de topo da sequência a mover */
+static CARTA topoSequencia(PILHA *ori, int n) {
+    return ori->cartas[ori->tamanho - n];
+}
+
+/* Carta de fundo da sequência a mover */
+static CARTA fundoSequencia(PILHA *ori) {
+    return ori->cartas[ori->tamanho - 1];
+}
+
+int validarFlagMenor(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    if (!temFlag(r, '<')) return 1;
+    if (des->tamanho == 0) return 0;
+    return getValor(topoSequencia(ori, n)) == getValor(topoCarta(des)) - 1;
+}
+
+int validarFlagMaior(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    if (!temFlag(r, '>')) return 1;
+    if (des->tamanho == 0) return 0;
+    return getValor(topoSequencia(ori, n)) == getValor(topoCarta(des)) + 1;
+}
+
+int validarFlagTil(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    if (!temFlag(r, '~')) return 1;
+    if (des->tamanho == 0) return 0;
+    int diff = getValor(topoSequencia(ori, n)) - getValor(topoCarta(des));
+    return (diff == 1 || diff == -1);
+}
+
+int validarFlagM(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    if (!temFlag(r, 'M')) return 1;
+    if (des->tamanho == 0) return 0;
+    return getNaipe(topoSequencia(ori, n)) == getNaipe(topoCarta(des));
+}
+
+int validarFlagX(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    if (!temFlag(r, 'X')) return 1;
+    if (des->tamanho == 0) return 1;
+    return getNaipe(topoSequencia(ori, n)) != getNaipe(topoCarta(des));
+}
+
+int validarFlagC(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    if (!temFlag(r, 'C')) return 1;
+    if (des->tamanho == 0) return 0;
+    return getCor(topoSequencia(ori, n)) == getCor(topoCarta(des));
+}
+
+int validarFlagD(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    if (!temFlag(r, 'D')) return 1;
+    if (des->tamanho == 0) return 1;
+    return getCor(topoSequencia(ori, n)) != getCor(topoCarta(des));
+}
+
+int validarFlagV(PILHA *des, RegrasMovAuto r) {
+    if (!temFlag(r, 'V')) return 1;
+    return des->tamanho == 0;
+}
+
+/* --- HELPERS PARA DESTINO --- */
+
+int validarFlagsBasicas(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    return validarFlagMenor(ori, des, n, r) && validarFlagMaior(ori, des, n, r) &&
+           validarFlagTil(ori, des, n, r) && validarFlagV(des, r);
+}
+
+int validarFlagsAtributos(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    return validarFlagM(ori, des, n, r) && validarFlagX(ori, des, n, r) &&
+           validarFlagC(ori, des, n, r) && validarFlagD(ori, des, n, r);
+}
+
+int validarFlagsRanks(PILHA *o, int n, RegrasMovAuto r) {
+    int a = (temFlag(r, 'a') ? getValor(fundoSequencia(o)) == 1 : 1);
+    int A = (temFlag(r, 'A') ? getValor(topoSequencia(o, n)) == 1 : 1);
+    int k = (temFlag(r, 'k') ? getValor(fundoSequencia(o)) == 13 : 1);
+    int K = (temFlag(r, 'K') ? getValor(topoSequencia(o, n)) == 13 : 1);
+    return a && A && k && K;
+}
+
+int validarDestino(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
+    if (temFlag(r, '*')) return 1;
+    return validarFlagsBasicas(o, d, n, r) && 
+           validarFlagsAtributos(o, d, n, r) && 
+           validarFlagsRanks(o, n, r);
+}
+
+/* ============================================================
+ *  VALIDAÇÃO COMPLETA DE UM MOVIMENTO
+ * ============================================================ */
+
+/* Verifica se o tipo de pilha tem flag '1' (máximo 1 carta) */
+int tipoTemFlag1(RegrasTipo rt, const char *tipo) {
+    RegrasTipo aux = rt;
+    while (aux) {
+        if (strcmp(aux->tipoDePilha, tipo) == 0) {
+            for (int i = 0; aux->flags[0][i] != '\0'; i++)
+                if (aux->flags[0][i] == '1' && aux->flags[1][i] == '1') return 1;
+        }
+        aux = aux->prox;
+    }
+    return 0;
+}
+
+static int indicesValidos(ESTADO *j, int io, int id, int n) {
+    if (io < 0 || io >= j->num_pilhas || id < 0 || id >= j->num_pilhas) return 0;
+    return (io != id && n > 0);
+}
+
+static int regraValida(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
+    if (strcmp(r->comando, "MOV") || strcmp(r->origem, o->tipo) || strcmp(r->destino, d->tipo)) return 0;
+    return (o->tamanho >= n && validarSequencia(o, n, r) && validarDestino(o, d, n, r));
+}
+
+int validarMovimento(ESTADO *j, int io, int id, int n, RegrasMovAuto rma, RegrasTipo rt) {
+    if (!indicesValidos(j, io, id, n)) return 0;
+    PILHA *d = &j->pilhas[id];
+    if (tipoTemFlag1(rt, d->tipo) && (d->tamanho + n) > 1) return 0;
+    for (RegrasMovAuto r = rma; r; r = r->prox)
+        if (regraValida(&j->pilhas[io], d, n, r)) return 1;
+    return 0;
+}
+
+/* ============================================================
+ *  EXECUTAR MOVIMENTO (sem validação)
+ * ============================================================ */
+
+void executarMov(ESTADO *j, int io, int id, int n) {
+    PILHA *ori = &j->pilhas[io];
+    PILHA *des = &j->pilhas[id];
+    int base = ori->tamanho - n;
+    for (int i = 0; i < n; i++)
+        pushCarta(des, ori->cartas[base + i]);
+    ori->tamanho -= n;
+}
+
+int tentarMover(ESTADO *j, int io, int id, int n, RegrasMovAuto rma, RegrasTipo rt) {
+    if (!validarMovimento(j, io, id, n, rma, rt)) return 0;
+    executarMov(j, io, id, n);
+    return 1;
+}
+
+/* ============================================================
+ *  AUTO
+ * ============================================================ */
+
+int executarAutoSeValido(ESTADO *j, RegrasMovAuto r, int io, int id, int n, RegrasTipo rt) {
+    PILHA *d = &j->pilhas[id];
+    if (tipoTemFlag1(rt, d->tipo) && (d->tamanho + n) > 1) return 0;
+    if (validarSequencia(&j->pilhas[io], n, r) && 
+        validarDestino(&j->pilhas[io], d, n, r)) {
+        executarMov(j, io, id, n);
+        return 1;
+    }
+    return 0;
+}
+
+int tentarAutoEntrePilhas(ESTADO *j, RegrasMovAuto r, int io, int id, RegrasTipo rt) {
+    if (strcmp(j->pilhas[io].tipo, r->origem) != 0 || 
+        strcmp(j->pilhas[id].tipo, r->destino) != 0) return 0;
+    int n = temFlag(r, '+') ? j->pilhas[io].tamanho : 1;
+    while (n >= 1) {
+        if (executarAutoSeValido(j, r, io, id, n, rt)) return 1;
+        n--;
+    }
+    return 0;
+}
+
+int tentarAutoUmaVez(ESTADO *j, RegrasMovAuto rma, RegrasTipo rt) {
+    RegrasMovAuto aux = rma;
+    while (aux != NULL) {
+        if (strcmp(aux->comando, "AUTO") == 0) {
+            for (int io = 0; io < j->num_pilhas; io++)
+                for (int id = 0; id < j->num_pilhas; id++)
+                    if (tentarAutoEntrePilhas(j, aux, io, id, rt)) return 1;
+        }
+        aux = aux->prox;
+    }
+    return 0;
+}
+
+void processarAuto(ESTADO *j, RegrasMovAuto rma, RegrasTipo rt) {
+    int encontrou;
+    do {
+        encontrou = tentarAutoUmaVez(j, rma, rt);
+        if (encontrou) {
+            printf("\n[AUTO] Movimento automatico executado.\n");
+            mostrarEstado(j);
+        }
+    } while (encontrou);
+}
+
+/* ============================================================
+ *  VITÓRIA
+ * ============================================================ */
+
+int contarCartasTipo(ESTADO *j, const char *tipo) {
+    int total = 0;
+    for (int i = 0; i < j->num_pilhas; i++)
+        if (strcmp(j->pilhas[i].tipo, tipo) == 0)
+            total += j->pilhas[i].tamanho;
+    return total;
+}
+
+int condicaoWinSatisfeita(ESTADO *j, RegrasWin rw) {
+    int total = contarCartasTipo(j, rw->tipoDePilha);
+    /* condicaoWin é cartas por pilha; conta pilhas do tipo */
+    int npilhas = 0;
+    for (int i = 0; i < j->num_pilhas; i++)
+        if (strcmp(j->pilhas[i].tipo, rw->tipoDePilha) == 0) npilhas++;
+    if (npilhas == 0) return 1;
+    return total == rw->condicaoWin * npilhas;
+}
+
+int verificarVitoria(ESTADO *j, RegrasWin rw) {
+    RegrasWin aux = rw;
+    while (aux != NULL) {
+        if (!condicaoWinSatisfeita(j, aux)) return 0;
+        aux = aux->prox;
+    }
+    return 1;
+}
+
+/* ============================================================
+ *  SAVE / LOAD
+ * ============================================================ */
+
+void gravarPilha(FILE *f, PILHA *p) {
+    for (int k = 0; k < p->tamanho; k++) {
+        char buf[4];
+        card2str(p->cartas[k], buf);
+        fprintf(f, "%s ", buf);
+    }
+    fprintf(f, "\n");
+}
+
+void gravarJogo(ESTADO *j, const char *nome_paciencia) {
+    FILE *f = fopen("save.txt", "w");
+    if (!f) { printf("Erro ao gravar.\n"); return; }
+    fprintf(f, "%s.txt\n", nome_paciencia);
+    for (int i = 0; i < j->num_pilhas; i++)
+        gravarPilha(f, &j->pilhas[i]);
+    fclose(f);
+    printf("Jogo gravado em save.txt\n");
+}
+
+/* Lê uma linha de save e preenche a pilha */
+void carregarLinhaPilha(PILHA *p, char *linha) {
+    char token[8];
+    int pos = 0, delta = 0;
+    while (sscanf(linha + pos, "%7s%n", token, &delta) == 1) {
+        pos += delta;
+        CARTA c = str2card(token);
+        if (c > 0) pushCarta(p, c);
+    }
+}
+
+void processarLinhaSave(ESTADO *j, int i, FILE *f) {
+    char linha[512];
+    j->pilhas[i].tamanho = 0;
+    if (fgets(linha, 512, f)) carregarLinhaPilha(&j->pilhas[i], linha);
+}
+
+int carregarJogo(ESTADO *j) {
+    FILE *f = fopen("save.txt", "r");
+    if (!f) { printf("Sem ficheiro de save.\n"); return 0; }
+    char b[512];
+    fgets(b, 512, f); /* skip name line */
+    for (int i = 0; i < j->num_pilhas; i++) processarLinhaSave(j, i, f);
+    fclose(f);
+    return 1;
+}
+
+/* ============================================================
+ *  DISPLAY
+ * ============================================================ */
+
+int ehGrupoSuperior(const char *t) {
+    if (strcmp(t, "FUND") == 0 || strcmp(t, "DESCARTE") == 0) return 1;
+    return (strcmp(t, "CELL") == 0);
+}
+
+int maxAltura(ESTADO *j, int sup) {
+    int m = 0;
+    for (int i = 0; i < j->num_pilhas; i++) {
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup && j->pilhas[i].tamanho > m)
+            m = j->pilhas[i].tamanho;
+    }
+    return m;
+}
+
+int printCabecalho(ESTADO *j, int sup) {
+    int c = 0;
+    for (int i = 0; i < j->num_pilhas; i++) {
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) {
+            printf(" [%2d:%-8s] ", i + 1, j->pilhas[i].tipo);
+            c++;
+        }
+    }
+    if (c > 0) printf("\n");
+    return c;
+}
+
+/* Devolve o char de visibilidade do tipo ('=', '_', '^') ou '=' por omissão */
+char visibilidadeTipo(RegrasTipo rt, const char *tipo) {
+    RegrasTipo aux = rt;
+    while (aux) {
+        if (strcmp(aux->tipoDePilha, tipo) == 0) {
+            for (int i = 0; aux->flags[0][i] != '\0'; i++) {
+                char f = aux->flags[0][i];
+                if ((f == '=' || f == '_' || f == '^') && aux->flags[1][i] == '1')
+                    return f;
+            }
+        }
+        aux = aux->prox;
+    }
+    return '='; /* default: todas visíveis */
+}
+
+void printCelula(ESTADO *j, int i, int lin) {
+    PILHA *p = &j->pilhas[i];
+    if (lin >= p->tamanho) { printf("               "); return; }
+    char vis = visibilidadeTipo(j->rt, p->tipo);
+    int mostrar = (vis == '=') || (vis == '^' && lin == p->tamanho - 1);
+    if (mostrar) {
+        char buf[4];
+        card2str(p->cartas[lin], buf);
+        printf("      %-2s       ", buf);
+    } else {
+        printf("      **       ");
+    }
+}
+
+void printLinha(ESTADO *j, int lin, int sup) {
+    for (int i = 0; i < j->num_pilhas; i++) {
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup)
+            printCelula(j, i, lin);
+    }
+    printf("\n");
+}
+
+void printGrupo(ESTADO *j, int sup) {
+    int m = maxAltura(j, sup);
+    if (printCabecalho(j, sup) > 0) {
+        for (int l = 0; l < m; l++)
+            printLinha(j, l, sup);
+    }
+}
+
+void imprimirTabuleiro(ESTADO *j) {
+    if (j->num_pilhas == 0) return;
+    printGrupo(j, 1); // Grupo superior (FUND, DESCARTE, CELL)
+    printf("\n");
+    printGrupo(j, 0); // Grupo TAB
+}
+
+void mostrarEstado(ESTADO *j) {
+    printf("\n============= ESTADO DO JOGO =============\n");
+    imprimirTabuleiro(j);
+    printf("==========================================\n");
+}
+
+/* ============================================================
+ *  INICIALIZAÇÃO DO ESTADO (BARALHO)
+ * ============================================================ */
+
+BARALHO criarBaralho(int n_baralhos) {
+    int total = 52 * n_baralhos;
+    BARALHO b = malloc(sizeof(CARTA) * total);
+    for (int i = 0; i < total; i++) b[i] = (i % 52) + 1;
+    return b;
+}
+
+void baralharBaralho(BARALHO b, int n_baralhos) {
+    int total = 52 * n_baralhos;
+    srand((unsigned)time(NULL));
+    for (int i = total - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        CARTA t = b[i]; b[i] = b[j]; b[j] = t;
+    }
+}
+
+/* ============================================================
+ *  CONSTRUÇÃO DO ESTADO A PARTIR DAS REGRAS INIT
+ *  (percorre a lista de trás para a frente porque a lista
+ *   foi construída ao contrário via prepend)
+ * ============================================================ */
+
+/* Conta quantos INITs existem */
+int contarInits(RegrasInit ri) {
+    int n = 0;
+    RegrasInit aux = ri;
+    while (aux) { n++; aux = aux->prox; }
+    return n;
+}
+
+/* Vai ao último nó da lista */
+RegrasInit ultimoInit(RegrasInit ri) {
+    if (!ri) return NULL;
+    while (ri->prox) ri = ri->prox;
+    return ri;
+}
+
+/* Inicializa array de pilhas */
+void inicializarPilhas(ESTADO *j, int n) {
+    j->pilhas     = malloc(n * sizeof(PILHA));
+    j->num_pilhas = n;
+    for (int i = 0; i < n; i++) {
+        j->pilhas[i].cartas    = NULL;
+        j->pilhas[i].tamanho   = 0;
+        j->pilhas[i].capacidade = 0;
+        j->pilhas[i].tipo      = NULL;
+    }
+}
+
+/* Preenche uma pilha a partir do índice do deck */
+void preencherPilha(PILHA *p, const char *tipo, BARALHO deck,
+                    int *idx, int n_cartas) {
+    p->tipo = malloc(strlen(tipo) + 1);
+    strcpy(p->tipo, tipo);
+    for (int i = 0; i < n_cartas; i++)
+        pushCarta(p, deck[(*idx)++]);
+}
+
+void aplicarInitAoEstado(ESTADO *j, RegrasInit ri, BARALHO deck) {
+    int n = contarInits(ri);
+    if (n == 0 || deck == NULL) return;
+    
+    inicializarPilhas(j, n);
+    /* percorre do último para o primeiro (lista foi construída por prepend) */
+    RegrasInit cur = ultimoInit(ri);
+    int idx = 0, col = 0;
+    while (cur != NULL && col < n) {
+        if (cur->tipoDePilha)
+            preencherPilha(&j->pilhas[col++], cur->tipoDePilha, deck, &idx, cur->numeroDeCartas);
+        cur = cur->ant;
+    }
+}
+
+/* ============================================================
+ *  UNDO – HISTÓRICO DE ESTADOS
+ * ============================================================ */
+
+void guardarSnapshot(ESTADO *j) {
+    SNAPSHOT *s = malloc(sizeof(SNAPSHOT));
+    s->num_pilhas = j->num_pilhas;
+    s->cartas   = malloc(j->num_pilhas * sizeof(CARTA *));
+    s->tamanhos = malloc(j->num_pilhas * sizeof(int));
+    for (int i = 0; i < j->num_pilhas; i++) {
+        s->tamanhos[i] = j->pilhas[i].tamanho;
+        s->cartas[i]   = malloc(j->pilhas[i].tamanho * sizeof(CARTA));
+        memcpy(s->cartas[i], j->pilhas[i].cartas, j->pilhas[i].tamanho * sizeof(CARTA));
+    }
+    s->prox = j->historico;
+    j->historico = s;
+}
+
+void libertarSnapshot(SNAPSHOT *s) {
+    for (int i = 0; i < s->num_pilhas; i++) free(s->cartas[i]);
+    free(s->cartas);
+    free(s->tamanhos);
+    free(s);
+}
+
+int restaurarSnapshot(ESTADO *j) {
+    if (!j->historico) { printf("Nao ha jogadas para desfazer.\n"); return 0; }
+    SNAPSHOT *s = j->historico;
+    j->historico = s->prox;
+    for (int i = 0; i < j->num_pilhas; i++) {
+        j->pilhas[i].tamanho = s->tamanhos[i];
+        memcpy(j->pilhas[i].cartas, s->cartas[i], s->tamanhos[i] * sizeof(CARTA));
+    }
+    libertarSnapshot(s);
+    return 1;
+}
+
+/* ============================================================
+ *  PROCESSAMENTO DE COMANDOS DO UTILIZADOR
+ * ============================================================ */
+
 void tratarAjuda(void) {
     printf("\nComandos:\n");
     printf("  p <o> <d> [n] - Move n cartas (default 1) da pilha o para d\n");
@@ -31,24 +672,6 @@ void tratarAjuda(void) {
     printf("  q             - Sair\n");
 }
 
-/**
- * @brief Descarta o snapshot do topo do histórico (movimento inválido).
- * @param j  Estado do jogo.
- */
-static void descartarSnapshot(ESTADO *j) {
-    SNAPSHOT *s  = j->historico;
-    j->historico = s->prox;
-    libertarSnapshot(s);
-}
-
-/**
- * @brief Interpreta e executa o comando 'p'.
- *        Guarda snapshot antes; descarta-o se o movimento for inválido.
- * @param buf  Linha de comando (ex: "p 3 7 2").
- * @param j    Estado do jogo.
- * @param rma  Lista de regras MOV/AUTO.
- * @param rw   Lista de regras WIN.
- */
 void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
     int o, d, n = 1;
     if (sscanf(buf, " p %d %d %d", &o, &d, &n) < 2) {
@@ -57,7 +680,10 @@ void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
     }
     guardarSnapshot(j);
     if (!tentarMover(j, o - 1, d - 1, n, rma, j->rt)) {
-        descartarSnapshot(j);
+        /* movimento inválido: descartar o snapshot que acabámos de guardar */
+        SNAPSHOT *s = j->historico;
+        j->historico = s->prox;
+        libertarSnapshot(s);
         printf("Movimento invalido!\n");
     } else {
         printf("\n[MOV] Movimento executado: %d -> %d (%d cartas)\n", o, d, n);
@@ -67,22 +693,10 @@ void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
     }
 }
 
-/**
- * @brief Executa o comando 'u': restaura o estado anterior e mostra-o.
- * @param j  Estado do jogo.
- */
-void tratarUndo(ESTADO *j) {
-    if (restaurarSnapshot(j)) mostrarEstado(j);
-}
+/* ============================================================
+ *  LOOP PRINCIPAL
+ * ============================================================ */
 
-/**
- * @brief Executa acções de sistema: 's' (save), 'l' (load), 'r' (reiniciar).
- * @param c   Caractere do comando.
- * @param j   Estado do jogo.
- * @param ri  Lista de regras INIT (para reiniciar).
- * @param n   Nome da paciência (para o save).
- * @return    Sempre 1 (loop continua).
- */
 int acaoSistema(char c, ESTADO *j, RegrasInit ri, const char *n) {
     if (c == 's') gravarJogo(j, n);
     else if (c == 'l') { carregarJogo(j); mostrarEstado(j); }
@@ -90,21 +704,10 @@ int acaoSistema(char c, ESTADO *j, RegrasInit ri, const char *n) {
     return 1;
 }
 
-/* ============================================================
- *  LOOP PRINCIPAL
- * ============================================================ */
+void tratarUndo(ESTADO *j) {
+    if (restaurarSnapshot(j)) mostrarEstado(j);
+}
 
-/**
- * @brief Executa um único comando.
- * @param buf   Linha de comando (sem newline).
- * @param j     Estado do jogo.
- * @param rma   Lista de regras MOV/AUTO.
- * @param ri    Lista de regras INIT.
- * @param rb    Regras de baralho (não usado directamente aqui).
- * @param rw    Lista de regras WIN.
- * @param nome  Nome da paciência.
- * @return      1 para continuar, 0 para terminar ('q').
- */
 int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
                     RegrasBaralhos rb, RegrasWin rw, const char *nome) {
     char c = buf[0];
@@ -114,69 +717,86 @@ int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
     else if (c == 'p') tratarMover(buf, j, rma, rw);
     else if (c == 'u') tratarUndo(j);
     else if (strchr("slr", c)) acaoSistema(c, j, ri, nome);
-    else printf("Comando desconhecido. Use 'h' para ajuda.\n");
+    else printf("Comando desconhecido.\n");
     return 1;
-    (void)rb;
 }
 
-/**
- * @brief Loop de leitura e execução de comandos até 'q' ou EOF.
- * @param j     Estado do jogo.
- * @param rma   Lista de regras MOV/AUTO.
- * @param ri    Lista de regras INIT.
- * @param rb    Regras de baralho.
- * @param rw    Lista de regras WIN.
- * @param nome  Nome da paciência (prompt e save).
- */
 void loopComandos(ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
                   RegrasBaralhos rb, RegrasWin rw, const char *nome) {
     char buf[256];
     int continuar = 1;
-    const char *display = (nome) ? nome : "Paciencia";
-    while (continuar) {
-        printf("%s> ", display);
-        if (fgets(buf, 256, stdin) == NULL) break;
-        buf[strcspn(buf, "\n")] = '\0';
-        if (buf[0] != '\0')
-            continuar = executarComando(buf, j, rma, ri, rb, rw, nome);
+    int input_ok = 1;
+    while (continuar && input_ok) {
+        const char *display_nome = (nome) ? nome : "Paciencia";
+        printf("%s> ", display_nome);
+        if (fgets(buf, 256, stdin) == NULL) {
+            input_ok = 0; // Sinaliza que não houve mais entrada
+        } else {
+            buf[strcspn(buf, "\n")] = '\0';
+            if (buf[0] != '\0')
+                continuar = executarComando(buf, j, rma, ri, rb, rw, nome);
+        }
     }
 }
 
 /* ============================================================
- *  SETUP E ENTRY POINT
+ *  IMPRIMIR REGRAS (diagnóstico)
  * ============================================================ */
 
-/**
- * @brief Cria e baralha o baralho; imprime regras de diagnóstico.
- * @param j    Estado do jogo (j->B será preenchido).
- * @param rb   Regras de baralho.
- * @param rma  Lista de regras MOV/AUTO.
- * @param rw   Lista de regras WIN.
- */
+void imprimirMovs(RegrasMovAuto rma) {
+    RegrasMovAuto aux = rma;
+    while (aux) {
+        printf("   %s %s %s [", aux->comando, aux->origem, aux->destino);
+        for (int i = 0; aux->flags[0][i] != '\0'; i++)
+            if (aux->flags[1][i] == '1') printf("%c", aux->flags[0][i]);
+        printf("]\n");
+        aux = aux->prox;
+    }
+}
+
+void imprimirWins(RegrasWin rw) {
+    while (rw) {
+        printf("   WIN %s %d\n", rw->tipoDePilha, rw->condicaoWin);
+        rw = rw->prox;
+    }
+}
+
+/* ============================================================
+ *  LIMPAR ESTADO
+ * ============================================================ */
+
+void limparEstado(ESTADO *j) {
+    for (int i = 0; i < j->num_pilhas; i++) {
+        free(j->pilhas[i].cartas);
+        free(j->pilhas[i].tipo);
+    }
+    free(j->pilhas);
+    free(j->B);
+    while (j->historico) {
+        SNAPSHOT *s = j->historico;
+        j->historico = s->prox;
+        libertarSnapshot(s);
+    }
+}
+
+/* ============================================================
+ *  ENTRY POINT
+ * ============================================================ */
+
 void prepararAmbiente(ESTADO *j, RegrasBaralhos rb, RegrasMovAuto rma, RegrasWin rw) {
-    int n = (rb) ? rb->numeroDeBaralhos : 1;
-    j->B = criarBaralho(n);
-    j->total_cartas_baralho = 52 * n;
-    baralharBaralho(j->B, n);
-    printf("Movimentos validos:\n");   imprimirMovs(rma);
+    int n_baralhos = (rb) ? rb->numeroDeBaralhos : 1;
+    j->B = criarBaralho(n_baralhos);
+    j->total_cartas_baralho = 52 * n_baralhos;
+    baralharBaralho(j->B, n_baralhos);
+    printf("Movimentos validos:\n"); imprimirMovs(rma);
     printf("Condicoes de vitoria:\n"); imprimirWins(rw);
 }
 
-/**
- * @brief Ponto de entrada do motor de jogo.
- * @param rma           Lista de regras MOV/AUTO.
- * @param rj            Regra JOGO.
- * @param rb            Regra BARALHOS.
- * @param rt            Lista de regras TIPO.
- * @param ri            Lista de regras INIT.
- * @param rw            Lista de regras WIN.
- * @param carregar_save Se 1, carrega "save.txt" antes de começar.
- */
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
              RegrasTipo rt, RegrasInit ri, RegrasWin rw, int carregar_save) {
     ESTADO jogo;
     memset(&jogo, 0, sizeof(ESTADO));
-    jogo.rt       = rt;
+    jogo.rt = rt;
     jogo.historico = NULL;
 
     const char *nome = (rj && rj->jogoNome) ? rj->jogoNome : "Jogo Desconhecido";
