@@ -13,6 +13,7 @@ const FEEDBACK tabela_mensagens[] = {
         {GAME_OVER, ">>>>> GAME OVER! para sair use 'q', para reiniciar use 'r'."},
         {Comando_INVALIDO, "Comando invalido!"},
         {Flag_INVALIDA, "Flag invalida!"},
+        {ERRO_CAMINHO_INVALIDO, "Caminho invalido!"},
         {0, NULL}
 };
 
@@ -208,7 +209,6 @@ MENSAGENS abreFicheiro(char *nome,RegrasMovAuto *listaMA,RegrasJogo *listaJ,Regr
     sprintf(caminho, "paciencias/%s", nome);
     FILE *f = fopen(caminho, "r");
     if (!f) {
-        printf("Erro ao abrir %s\n", caminho);
         return ERRO_CAMINHO_INVALIDO;
     }
     MENSAGENS a = leFicheiro(f,listaMA,listaJ,listaB,listaT,listaI,listaW);
