@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include "readFile.h"
 
 const FEEDBACK tabela_mensagens[] = {
@@ -196,4 +197,40 @@ MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *
       if(x!=OK) return mostrar_mensagem(x), x;
     }
     return mostrar_mensagem(OK), OK;
+}
+
+MENSAGENS abreFicheiro(char *nome,RegrasMovAuto *listaMA,RegrasJogo *listaJ,RegrasBaralhos *listaB,RegrasTipo *listaT,RegrasInit *listaI,RegrasWin *listaW) {
+    (*listaJ)->comando = NULL;
+    (*listaJ)->jogoNome = NULL;
+    (*listaB)->comando = NULL;
+    (*listaB)->numeroDeBaralhos = 0;
+    char caminho[200];
+    sprintf(caminho, "paciencias/%s", nome);
+    FILE *f = fopen(caminho, "r");
+    if (!f) {
+        printf("Erro ao abrir %s\n", caminho);
+        return ERRO_CAMINHO_INVALIDO;
+    }
+    MENSAGENS a = leFicheiro(f,listaMA,listaJ,listaB,listaT,listaI,listaW);
+    fclose(f);
+    return a;
+}
+
+int abrirPastaImprime (char *nome) {
+    DIR *d = opendir("paciencias");
+    if (!d) {
+        printf("Erro: pasta 'paciencias' não encontrada.\n");
+        return 1;
+    }
+    struct dirent *dir;
+    while ((dir = readdir(d)) != NULL) {
+        int len = strlen(dir->d_name);
+        if (len > 4 && strcmp(dir->d_name + len - 4, ".txt") == 0)
+        printf("%s\n", dir->d_name);
+    }
+    closedir(d);
+    printf("Escolha uma paciência: ");
+    scanf("%s", nome);
+    while (getchar() != '\n'); // Limpa o buffer de entrada (consome o \n deixado pelo scanf)
+    return 0;
 }
