@@ -1,6 +1,3 @@
-#ifndef READFILE_H
-#define READFILE_H
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -108,6 +105,5 @@ void     mostrar_mensagem(MENSAGENS cod);
 MENSAGENS abreFicheiro(char *nome, RegrasMovAuto *listaMA, RegrasJogo *listaJ,
                         RegrasBaralhos *listaB, RegrasTipo *listaT,
                         RegrasInit *listaI, RegrasWin *listaW);
-int      abrirPastaImprime(char *nome);
-
-#endif /* READFILE_H */
+int      abrirPastaImprime(char *nome, int *carregar_save);
+int      lerNomePacienciaDoSave(char *nome_paciencia);

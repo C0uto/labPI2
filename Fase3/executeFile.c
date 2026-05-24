@@ -792,7 +792,7 @@ void prepararAmbiente(ESTADO *j, RegrasBaralhos rb, RegrasMovAuto rma, RegrasWin
 }
 
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
-             RegrasTipo rt, RegrasInit ri, RegrasWin rw) {
+             RegrasTipo rt, RegrasInit ri, RegrasWin rw, int carregar_save) {
     ESTADO jogo;
     memset(&jogo, 0, sizeof(ESTADO));
     jogo.rt = rt;
@@ -802,6 +802,7 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     printf("\n=== %s ===\n", nome);
     prepararAmbiente(&jogo, rb, rma, rw);
     aplicarInitAoEstado(&jogo, ri, jogo.B);
+    if (carregar_save) carregarJogo(&jogo);
     mostrarEstado(&jogo);
     loopComandos(&jogo, rma, ri, rb, rw, nome);
     limparEstado(&jogo);

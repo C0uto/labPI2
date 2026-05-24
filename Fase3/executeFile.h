@@ -60,4 +60,4 @@ void prepararAmbiente(ESTADO *j, RegrasBaralhos rb, RegrasMovAuto rma, RegrasWin
 
 /* Loop principal */
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
-             RegrasTipo rt, RegrasInit ri, RegrasWin rw);
+             RegrasTipo rt, RegrasInit ri, RegrasWin rw, int carregar_save);

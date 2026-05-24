@@ -212,21 +212,35 @@ MENSAGENS abreFicheiro(char *nome,RegrasMovAuto *listaMA,RegrasJogo *listaJ,Regr
     return a;
 }
 
-int abrirPastaImprime (char *nome) {
+int lerNomePacienciaDoSave(char *nome_paciencia) {
+    FILE *f = fopen("save.txt", "r");
+    if (!f) return 0;
+    char linha[200];
+    if (!fgets(linha, 200, f)) { fclose(f); return 0; }
+    fclose(f);
+    linha[strcspn(linha, "\n")] = '\0';
+    strcpy(nome_paciencia, linha);
+    return 1;
+}
+
+int abrirPastaImprime(char *nome, int *carregar_save) {
     DIR *d = opendir("paciencias");
     if (!d) {
-        printf("Erro: pasta 'paciencias' não encontrada.\n");
+        printf("Erro: pasta 'paciencias' nao encontrada.\n");
         return 1;
     }
     struct dirent *dir;
     while ((dir = readdir(d)) != NULL) {
         int len = strlen(dir->d_name);
         if (len >= 4 && strcmp(dir->d_name + len - 4, ".txt") == 0)
-        printf("%s\n", dir->d_name);
+            printf("%s\n", dir->d_name);
     }
     closedir(d);
-    printf("Escolha uma paciência: ");
+    FILE *sv = fopen("save.txt", "r");
+    if (sv) { printf("save.txt\n"); fclose(sv); }
+    printf("Escolha uma paciencia (ou save.txt para carregar jogo gravado): ");
     scanf("%s", nome);
-    while (getchar() != '\n'); // Limpa o buffer de entrada (consome o \n deixado pelo scanf)
+    while (getchar() != '\n');
+    *carregar_save = (strcmp(nome, "save.txt") == 0);
     return 0;
 }
