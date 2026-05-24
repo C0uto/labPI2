@@ -108,6 +108,35 @@ static void moverParaPilha(ESTADO *j, int o, int to, int d_idx, int n, RegrasMov
     moverCartas(j, o, d, n, rma);
 }
 
+static int contarSequencia(ESTADO *j, int col) {
+    int t = getPilhaTamanho(j, col);
+    if (t < 13 || (j->paciencia[col][t - 1] - 1) % 13 != 0) return 0;
+    int seq = 1;
+    while (seq < 13) {
+        CARTA atual = j->paciencia[col][t - seq];
+        CARTA anterior = j->paciencia[col][t - seq - 1];
+        if (anterior != atual + 1 || (atual - 1) / 13 != (anterior - 1) / 13) break;
+        seq++;
+    }
+    return seq;
+}
+
+static void processarAuto(ESTADO *j, RegrasMovAuto rma) {
+    RegrasMovAuto aux = rma;
+    while (aux && strcmp(aux->comando, "AUTO") != 0) aux = aux->prox;
+    if (!aux) return;
+    for (int i = 0; i < j->num_pilhas; i++) {
+        if (contarSequencia(j, i) == 13) {
+            int t = getPilhaTamanho(j, i);
+            j->fundacao = j->paciencia[i][t - 13];
+            for (int k = 0; k < 13; k++) j->paciencia[i][t - 1 - k] = 0;
+            printf("\n[AUTO] Sequência completa (K a A) movida para a fundação!\n");
+            mostrarEstado(j);
+            break; 
+        }
+    }
+}
+
 void tratarPilha(char *input, ESTADO *j, RegrasMovAuto rma) {
     int o_idx, n = 1;
     char dest[20], dummy;
@@ -385,6 +414,7 @@ int executarEntrada(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri, BARA
         mostrarEstado(j);
     } else {
         processarComando(buf, j, rma);
+        processarAuto(j, rma);
     }
     return 1;
 }
