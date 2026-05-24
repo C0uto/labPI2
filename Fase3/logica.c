@@ -159,6 +159,24 @@ int validarFlagCoresAlternadas(PILHA *ori, int n, RegrasMovAuto r) {
 
 /* --- Validações de Destino --- */
 
+int validarFlagsBasicas(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    return validarFlagMenor(ori, des, n, r) && validarFlagMaior(ori, des, n, r) &&
+           validarFlagTil(ori, des, n, r) && validarFlagV(des, r);
+}
+
+int validarFlagsAtributos(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    return validarFlagM(ori, des, n, r) && validarFlagX(ori, des, n, r) &&
+           validarFlagC(ori, des, n, r) && validarFlagD(ori, des, n, r);
+}
+
+int validarFlagsRanks(PILHA *o, int n, RegrasMovAuto r) {
+    int a = (temFlag(r, 'a') ? getValor(fundoSequencia(o)) == 1 : 1);
+    int A = (temFlag(r, 'A') ? getValor(topoSequencia(o, n)) == 1 : 1);
+    int k = (temFlag(r, 'k') ? getValor(fundoSequencia(o)) == 13 : 1);
+    int K = (temFlag(r, 'K') ? getValor(topoSequencia(o, n)) == 13 : 1);
+    return a && A && k && K;
+}
+
 /**
  * Funcao interna para obter a carta que ficara no topo da sequencia apos o movimento
  *
@@ -310,13 +328,19 @@ int validarSequencia(PILHA *ori, int n, RegrasMovAuto r) {
  */
 int validarDestino(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
     if (temFlag(r, '*')) return 1;
-    int ranks = (temFlag(r, 'a') ? getValor(fundoSequencia(o)) == 1 : 1) &&
-                (temFlag(r, 'A') ? getValor(topoSequencia(o, n)) == 1 : 1) &&
-                (temFlag(r, 'k') ? getValor(fundoSequencia(o)) == 13 : 1) &&
-                (temFlag(r, 'K') ? getValor(topoSequencia(o, n)) == 13 : 1);
-    return validarFlagMenor(o, d, n, r) && validarFlagMaior(o, d, n, r) && validarFlagTil(o, d, n, r) &&
-           validarFlagM(o, d, n, r) && validarFlagX(o, d, n, r) && validarFlagC(o, d, n, r) &&
-           validarFlagD(o, d, n, r) && validarFlagV(d, r) && ranks;
+    return validarFlagsBasicas(o, d, n, r) && 
+           validarFlagsAtributos(o, d, n, r) && 
+           validarFlagsRanks(o, n, r);
+}
+
+static int indicesValidos(ESTADO *j, int io, int id, int n) {
+    if (io < 0 || io >= j->num_pilhas || id < 0 || id >= j->num_pilhas) return 0;
+    return (io != id && n > 0);
+}
+
+static int regraValida(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
+    if (strcmp(r->comando, "MOV") || strcmp(r->origem, o->tipo) || strcmp(r->destino, d->tipo)) return 0;
+    return (o->tamanho >= n && validarSequencia(o, n, r) && validarDestino(o, d, n, r));
 }
 
 /**
@@ -328,13 +352,11 @@ int validarDestino(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
  * * @return res -> 1 se o movimento for permitido, 0 caso contrario
  */
 int validarMovimento(ESTADO *j, int io, int id, int n, RegrasMovAuto rma, RegrasTipo rt) {
-    if (io < 0 || io >= j->num_pilhas || id < 0 || id >= j->num_pilhas || io == id || n <= 0) return 0;
-    PILHA *o = &j->pilhas[io], *d = &j->pilhas[id];
+    if (!indicesValidos(j, io, id, n)) return 0;
+    PILHA *d = &j->pilhas[id];
     if (tipoTemFlag1(rt, d->tipo) && (d->tamanho + n) > 1) return 0;
-    for (RegrasMovAuto r = rma; r; r = r->prox) {
-        if (!strcmp(r->comando, "MOV") && !strcmp(r->origem, o->tipo) && !strcmp(r->destino, d->tipo))
-            if (o->tamanho >= n && validarSequencia(o, n, r) && validarDestino(o, d, n, r)) return 1;
-    }
+    for (RegrasMovAuto r = rma; r; r = r->prox)
+        if (regraValida(&j->pilhas[io], d, n, r)) return 1;
     return 0;
 }
 

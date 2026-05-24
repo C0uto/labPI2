@@ -20,6 +20,10 @@ int validarFlagC(PILHA *ori, PILHA *des, int n, RegrasMovAuto r);
 int validarFlagD(PILHA *ori, PILHA *des, int n, RegrasMovAuto r);
 int validarFlagV(PILHA *des, RegrasMovAuto r);
 
+int validarFlagsBasicas(PILHA *ori, PILHA *des, int n, RegrasMovAuto r);
+int validarFlagsAtributos(PILHA *ori, PILHA *des, int n, RegrasMovAuto r);
+int validarFlagsRanks(PILHA *o, int n, RegrasMovAuto r);
+
 int validarSequencia(PILHA *ori, int n, RegrasMovAuto regra);
 int validarDestino(PILHA *o, PILHA *d, int n, RegrasMovAuto regra);
 int validarMovimento(ESTADO *j, int io, int id, int n, RegrasMovAuto rma, RegrasTipo rt);

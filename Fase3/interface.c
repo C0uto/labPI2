@@ -46,28 +46,43 @@ void printCelula(ESTADO *j, int i, int lin) {
 }
 
 /**
- * Funcao para imprimir um bloco completo de pilhas (ex: todas as TAB)
- *
- * * @param j -> Estado do jogo
- * * @param sup -> 1 para superior, 0 para inferior
+ * Funcao para calcular a maior quantidade de cartas entre pilhas de um certo grupo
  */
-static void printGrupo(ESTADO *j, int sup) {
+int maxAltura(ESTADO *j, int sup) {
     int m = 0;
     for (int i = 0; i < j->num_pilhas; i++)
-        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup && j->pilhas[i].tamanho > m) m = j->pilhas[i].tamanho;
-    
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup && j->pilhas[i].tamanho > m)
+            m = j->pilhas[i].tamanho;
+    return m;
+}
+
+/**
+ * Funcao para imprimir os cabecalhos (nomes e indices) de um grupo de pilhas
+ */
+int printCabecalho(ESTADO *j, int sup) {
     int c = 0;
     for (int i = 0; i < j->num_pilhas; i++)
         if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) {
-            printf(" [%2d:%-8s] ", i + 1, j->pilhas[i].tipo); c++;
+            printf(" [%2d:%-8s] ", i + 1, j->pilhas[i].tipo);
+            c++;
         }
-    if (c > 0) {
-        printf("\n");
-        for (int l = 0; l < m; l++) {
-            for (int i = 0; i < j->num_pilhas; i++)
-                if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) printCelula(j, i, l);
-            printf("\n");
-        }
+    if (c > 0) printf("\n");
+    return c;
+}
+
+void printLinha(ESTADO *j, int lin, int sup) {
+    for (int i = 0; i < j->num_pilhas; i++)
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) printCelula(j, i, lin);
+    printf("\n");
+}
+
+/**
+ * Funcao para imprimir um bloco completo de pilhas (ex: todas as TAB)
+ */
+static void printGrupo(ESTADO *j, int sup) {
+    int m = maxAltura(j, sup);
+    if (printCabecalho(j, sup) > 0) {
+        for (int l = 0; l < m; l++) printLinha(j, l, sup);
     }
 }
 

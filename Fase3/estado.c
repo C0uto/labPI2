@@ -165,6 +165,28 @@ void gravarJogo(ESTADO *j, const char *nome_paciencia) {
 }
 
 /**
+ * Funcao para carregar as cartas de uma linha de texto para uma estrutura de pilha
+ */
+void carregarLinhaPilha(PILHA *p, char *linha) {
+    char token[8];
+    int pos = 0, delta = 0;
+    while (sscanf(linha + pos, "%7s%n", token, &delta) == 1) {
+        pos += delta;
+        CARTA c = str2card(token);
+        if (c > 0) pushCarta(p, c);
+    }
+}
+
+/**
+ * Funcao para processar a leitura de uma pilha a partir do ficheiro de save
+ */
+void processarLinhaSave(ESTADO *j, int i, FILE *f) {
+    char linha[512];
+    j->pilhas[i].tamanho = 0;
+    if (fgets(linha, 512, f)) carregarLinhaPilha(&j->pilhas[i], linha);
+}
+
+/**
  * Funcao principal para carregar o jogo a partir de "save.txt"
  *
  * * @param j -> Estado do jogo
@@ -173,18 +195,9 @@ void gravarJogo(ESTADO *j, const char *nome_paciencia) {
 int carregarJogo(ESTADO *j) {
     FILE *f = fopen("save.txt", "r");
     if (!f) return 0;
-    char b[512], token[8];
-    fgets(b, 512, f);
-    for (int i = 0; i < j->num_pilhas; i++) {
-        j->pilhas[i].tamanho = 0;
-        if (fgets(b, 512, f)) {
-            int pos = 0, delta = 0;
-            while (sscanf(b + pos, "%7s%n", token, &delta) == 1) {
-                pos += delta; CARTA c = str2card(token);
-                if (c > 0) pushCarta(&j->pilhas[i], c);
-            }
-        }
-    }
+    char b[512];
+    fgets(b, 512, f); /* skip name line */
+    for (int i = 0; i < j->num_pilhas; i++) processarLinhaSave(j, i, f);
     fclose(f); return 1;
 }
 
