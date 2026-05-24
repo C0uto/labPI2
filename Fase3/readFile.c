@@ -116,15 +116,19 @@ MENSAGENS leLinhaInit (RegrasInit *ri, char *temp1, char *temp2,char *linha,int 
     return OK;
 }
 
+void novaStructTipo (RegrasTipo novo, char *temp1, char *temp2) {
+    novo->comando = malloc(strlen(temp1) + 1);
+    novo->tipoDePilha = malloc(strlen(temp2) + 1);
+    strcpy(novo->comando,temp1);
+    strcpy(novo->tipoDePilha,temp2);
+}
+
 MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,char *linha,int lidos) {
     RegrasTipo novo = malloc(sizeof(struct regra4));
     inicializarT(novo);
     lidos = sscanf(linha,"%s %s %s",temp1,temp2,flags_str);
     if(lidos != 3) return Comando_INVALIDO;
-    novo->comando = malloc(strlen(temp1) + 1);
-    novo->tipoDePilha = malloc(strlen(temp2) + 1);
-    strcpy(novo->comando,temp1);
-    strcpy(novo->tipoDePilha,temp2);
+    novaStructTipo (novo,temp1,temp2);
     MENSAGENS x = guardaflagsT(novo,flags_str);
     if(x==Flag_INVALIDA) return x;
     novo->prox = *rt;
