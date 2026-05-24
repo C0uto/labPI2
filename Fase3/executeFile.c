@@ -85,57 +85,48 @@ void moverCartas(ESTADO *j, int o, int d, int n, RegrasMovAuto rma) {
     mostrarEstado(j);
 }
 
-void tratarPilha(char *input, ESTADO *j, RegrasMovAuto rma) {
-    int o_idx, n = 1; 
-    char dest_str[20];
-    char dummy;
-
-    int res = sscanf(input, " %c %d %19s %d", &dummy, &o_idx, dest_str, &n);
-    if (res < 3) {
-        printf("Comando incompleto! Tenta o formato: p <origem> <destino> [<cartas>]\n");
-        return;
-    }
-
-    int o = o_idx - 1;
-    if (o < 0 || o >= j->num_pilhas) {
-        printf("Pilha de origem inválida!\n");
-        return;
-    }
-
-    int to = getPilhaTamanho(j, o);
-    if (to == 0) {
-        printf("Pilha de origem vazia!\n");
-        return;
-    }
-
-    // Caso o destino seja o Descarte/Fundação (usando 'f' ou 'd')
-    if (strcmp(dest_str, "f") == 0 || strcmp(dest_str, "d") == 0) {
-        if (existeRegraMov(rma, "TAB", "DESCARTE") || existeRegraMov(rma, "TAB", "FUND")) {
-            j->fundacao = j->paciencia[o][to - 1];
-            j->paciencia[o][to - 1] = 0;
-            mostrarEstado(j);
-        } else {
-            printf("Movimento para o descarte não é permitido neste jogo.\n");
-        }
-        return;
-    }
-
-    // Caso o destino seja outra pilha do tabuleiro (numérico)
-    int d_idx = atoi(dest_str);
-    if (d_idx > 0) {
-        if (!existeRegraMov(rma, "TAB", "TAB")) {
-            printf("Não é permitido mover cartas entre colunas neste jogo.\n");
-            return;
-        }
-        int d = d_idx - 1;
-        if (d < 0 || d >= j->num_pilhas || to < n || n <= 0) {
-            printf("Jogada inválida!\n");
-            return;
-        }
-        moverCartas(j, o, d, n, rma);
+static void moverParaDescarte(ESTADO *j, int o, int to, RegrasMovAuto rma) {
+    if (existeRegraMov(rma, "TAB", "DESCARTE") || existeRegraMov(rma, "TAB", "FUND")) {
+        j->fundacao = j->paciencia[o][to - 1];
+        j->paciencia[o][to - 1] = 0;
+        mostrarEstado(j);
     } else {
-        printf("Destino inválido! Use o número da pilha ou 'f' para o descarte.\n");
+        printf("Movimento para o descarte não é permitido neste jogo.\n");
     }
+}
+
+static void moverParaPilha(ESTADO *j, int o, int to, int d_idx, int n, RegrasMovAuto rma) {
+    if (!existeRegraMov(rma, "TAB", "TAB")) {
+        printf("Não é permitido mover cartas entre colunas.\n");
+        return;
+    }
+    int d = d_idx - 1;
+    if (d < 0 || d >= j->num_pilhas || to < n || n <= 0) {
+        printf("Jogada inválida!\n");
+        return;
+    }
+    moverCartas(j, o, d, n, rma);
+}
+
+void tratarPilha(char *input, ESTADO *j, RegrasMovAuto rma) {
+    int o_idx, n = 1;
+    char dest_str[20], dummy;
+    if (sscanf(input, " %c %d %19s %d", &dummy, &o_idx, dest_str, &n) < 3) {
+        printf("Comando incompleto! Use: p <origem> <destino> [<n>]\n");
+        return;
+    }
+    int o = o_idx - 1;
+    int to = (o >= 0 && o < j->num_pilhas) ? getPilhaTamanho(j, o) : 0;
+    if (to == 0) {
+        printf("Origem inválida ou vazia!\n");
+        return;
+    }
+    if (strcmp(dest_str, "f") == 0 || strcmp(dest_str, "d") == 0)
+        moverParaDescarte(j, o, to, rma);
+    else if (atoi(dest_str) > 0)
+        moverParaPilha(j, o, to, atoi(dest_str), n, rma);
+    else
+        printf("Destino inválido!\n");
 }
 
 void tratarBaralho(ESTADO *j, RegrasMovAuto rma) {
