@@ -2,6 +2,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdio. // Adicionado para sscanf, fgets, fopen, fclose
 #include "estado.h"
 
 /**

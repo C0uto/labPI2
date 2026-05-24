@@ -1,4 +1,6 @@
-#include "carta.h"
+#include "types.h" // Inclui os tipos base
+#include "carta.h" // Para funções de carta e pilha
+
 
 int temFlag(RegrasMovAuto r, char f);
 int tipoTemFlag1(RegrasTipo rt, const char *tipo);

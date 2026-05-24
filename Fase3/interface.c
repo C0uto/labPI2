@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "interface.h"
+#include "carta.h" // Adicionado para card2str
 
 /**
  * Funcao para identificar se um tipo de pilha pertence ao grupo superior do ecra

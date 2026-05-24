@@ -1,4 +1,6 @@
-#include "carta.h"
+#include "types.h" // Inclui os tipos base
+#include "carta.h" // Para funções de carta e pilha
+
 
 BARALHO criarBaralho(int n_baralhos);
 void baralharBaralho(BARALHO b, int n_baralhos);

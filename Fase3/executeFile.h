@@ -1,5 +1,5 @@
 #include "interface.h"
-
+// executeFile.h não precisa incluir types.h diretamente, pois interface.h já o faz.
 void tratarAjuda(void);
 void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw);
 void tratarUndo(ESTADO *j);
