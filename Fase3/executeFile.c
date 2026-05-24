@@ -447,35 +447,57 @@ int carregarJogo(ESTADO *j, RegrasInit ri, RegrasBaralhos rb) {
  *  DISPLAY
  * ============================================================ */
 
-void imprimirCabecalhoPilhas(ESTADO *j) {
-    for (int i = 0; i < j->num_pilhas; i++)
-        printf("[%d:%s]\t", i + 1, j->pilhas[i].tipo);
-    printf("\n");
+int ehGrupoSuperior(const char *t) {
+    if (strcmp(t, "FUND") == 0 || strcmp(t, "DESCARTE") == 0) return 1;
+    return (strcmp(t, "CELL") == 0);
 }
 
-void imprimirLinhaPilhas(ESTADO *j, int lin) {
+int maxAltura(ESTADO *j, int sup) {
+    int m = 0;
     for (int i = 0; i < j->num_pilhas; i++) {
-        if (lin < j->pilhas[i].tamanho)
-            printf(" %s\t", card2str(j->pilhas[i].cartas[lin]));
-        else
-            printf("   \t");
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup && j->pilhas[i].tamanho > m)
+            m = j->pilhas[i].tamanho;
+    }
+    return m;
+}
+
+int printCabecalho(ESTADO *j, int sup) {
+    int c = 0;
+    for (int i = 0; i < j->num_pilhas; i++) {
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) {
+            printf("[%d:%s]\t", i + 1, j->pilhas[i].tipo);
+            c++;
+        }
+    }
+    if (c > 0) printf("\n");
+    return c;
+}
+
+void printLinha(ESTADO *j, int lin, int sup) {
+    for (int i = 0; i < j->num_pilhas; i++) {
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) {
+            if (lin < j->pilhas[i].tamanho)
+                printf(" %s\t", card2str(j->pilhas[i].cartas[lin]));
+            else
+                printf(" \t");
+        }
     }
     printf("\n");
 }
 
-int calcularAlturaMax(ESTADO *j) {
-    int max = 0;
-    for (int i = 0; i < j->num_pilhas; i++)
-        if (j->pilhas[i].tamanho > max) max = j->pilhas[i].tamanho;
-    return max;
+void printGrupo(ESTADO *j, int sup) {
+    int m = maxAltura(j, sup);
+    if (printCabecalho(j, sup) > 0) {
+        for (int l = 0; l < m; l++)
+            printLinha(j, l, sup);
+    }
 }
 
 void imprimirTabuleiro(ESTADO *j) {
     if (j->num_pilhas == 0) return;
-    imprimirCabecalhoPilhas(j);
-    int max = calcularAlturaMax(j);
-    for (int lin = 0; lin < max; lin++)
-        imprimirLinhaPilhas(j, lin);
+    printGrupo(j, 1); // Grupo superior (FUND, DESCARTE, CELL)
+    printf("\n");
+    printGrupo(j, 0); // Grupo TAB
 }
 
 void mostrarEstado(ESTADO *j) {
