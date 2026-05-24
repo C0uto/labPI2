@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <string.h> // Adicionado para strcpy, strcmp, strlen, strcspn
 #include "executeFile.h"
 
 /**
