@@ -17,11 +17,6 @@ const FEEDBACK tabela_mensagens[] = {
         {0, NULL}
 };
 
-/**
- * Funcao para imprimir mensagens de feedback com base num codigo de erro ou estado
- *
- * * @param cod -> O codigo da mensagem definido no enum MENSAGENS
- */
 void mostrar_mensagem(MENSAGENS cod) {
         for(int i = 0; tabela_mensagens[i].feedback != NULL; i++) {
                 if(tabela_mensagens[i].mensagem == cod) {
@@ -31,11 +26,6 @@ void mostrar_mensagem(MENSAGENS cod) {
         }
 }
 
-/**
- * Funcao para inicializar as strings de flags de uma regra de movimento/auto
- *
- * * @param r -> Ponteiro para a estrutura da regra
- */
 void inicializarMA (RegrasMovAuto r) {
     strcpy(r->flags[0], "*+[]<>~mMxXcCdDVaAkK");
     strcpy(r->flags[1], "00000000000000000000");
@@ -43,11 +33,6 @@ void inicializarMA (RegrasMovAuto r) {
     r->prox = NULL;
 }
 
-/**
- * Funcao para inicializar as strings de flags de uma regra de tipo de pilha
- *
- * * @param rt -> Ponteiro para a estrutura de tipo
- */
 void inicializarT (RegrasTipo rt) {
     strcpy(rt->flags[0], "=_^1");
     strcpy(rt->flags[1], "0000");
@@ -55,33 +40,16 @@ void inicializarT (RegrasTipo rt) {
     rt->prox = NULL;
 }
 
-/**
- * Funcao para inicializar uma regra de INIT
- *
- * * @param r -> Ponteiro para a estrutura
- */
 void inicializarInit(RegrasInit r) {
     r->ant = NULL;
     r->prox = NULL;
 }
 
-/**
- * Funcao para inicializar uma regra de vitoria
- *
- * * @param r -> Ponteiro para a estrutura
- */
 void inicializarWin(RegrasWin r) {
     r->ant = NULL;
     r->prox = NULL;
 }
 
-/**
- * Funcao para ativar os bits de flags numa regra MOV/AUTO a partir de uma string
- *
- * * @param r -> A regra
- * * @param flags_str -> String contendo as flags (ex: "+[m")
- * * @return res -> OK ou Flag_INVALIDA
- */
 MENSAGENS guardaflagsMA (RegrasMovAuto r, char *flags_str) {
     for(int i = 0; flags_str[i]!='\0';i++) {
         int encontrado = 0;
@@ -96,13 +64,6 @@ MENSAGENS guardaflagsMA (RegrasMovAuto r, char *flags_str) {
     return OK;
 }
 
-/**
- * Funcao para ativar os bits de flags numa regra de TIPO a partir de uma string
- *
- * * @param rt -> A regra de tipo
- * * @param flags_str -> String contendo as flags (ex: "=")
- * * @return res -> OK ou Flag_INVALIDA
- */
 MENSAGENS guardaflagsT (RegrasTipo rt, char *flags_str) {
     for(int i = 0; flags_str[i]!='\0';i++) {
         int encontrado = 0;
@@ -117,14 +78,6 @@ MENSAGENS guardaflagsT (RegrasTipo rt, char *flags_str) {
     return OK;
 }
 
-/**
- * Funcao auxiliar para alocar e copiar strings basicas de uma regra de movimento
- *
- * * @param novo -> Ponteiro para a nova regra
- * * @param temp1 -> String do comando
- * * @param temp2 -> String da origem
- * * @param temp3 -> String do destino
- */
 void novaStructMovAuto (RegrasMovAuto novo, char *temp1, char *temp2, char *temp3 ) {
     novo->comando = malloc(strlen(temp1) + 1);
     novo->origem = malloc(strlen(temp2) + 1);
@@ -134,15 +87,6 @@ void novaStructMovAuto (RegrasMovAuto novo, char *temp1, char *temp2, char *temp
     strcpy(novo->destino,temp3);
 }
 
-/**
- * Funcao para processar uma linha do tipo MOV ou AUTO do ficheiro
- *
- * * @param rma -> Ponteiro para a lista de regras
- * * @param temp1, temp2, temp3 -> Strings de auxilio
- * * @param flags_str -> String de flags
- * * @param linha -> A linha completa lida do ficheiro
- * * @return res -> OK ou erro de comando/flag
- */
 MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha) {
     RegrasMovAuto novo = malloc(sizeof(struct regra));
     inicializarMA(novo);
@@ -156,15 +100,6 @@ MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *te
     return OK;
 }
 
-/**
- * Funcao para processar uma linha do tipo INIT do ficheiro
- *
- * * @param ri -> Ponteiro para a lista de regras de inicializacao
- * * @param temp1 -> Comando
- * * @param temp2 -> Tipo da pilha
- * * @param linha -> A linha lida
- * * @return res -> OK ou Comando_INVALIDO
- */
 MENSAGENS leLinhaInit (RegrasInit *ri, char *temp1, char *temp2, char *linha) {
     RegrasInit novo = malloc(sizeof(struct regra5));
     inicializarInit(novo);
@@ -179,13 +114,6 @@ MENSAGENS leLinhaInit (RegrasInit *ri, char *temp1, char *temp2, char *linha) {
     return OK;
 }
 
-/**
- * Funcao auxiliar para alocar memoria para as strings de uma regra de TIPO
- *
- * * @param novo -> Ponteiro para a regra
- * * @param temp1 -> Comando
- * * @param temp2 -> Tipo da pilha
- */
 void novaStructTipo (RegrasTipo novo, char *temp1, char *temp2) {
     novo->comando = malloc(strlen(temp1) + 1);
     novo->tipoDePilha = malloc(strlen(temp2) + 1);
@@ -193,16 +121,6 @@ void novaStructTipo (RegrasTipo novo, char *temp1, char *temp2) {
     strcpy(novo->tipoDePilha,temp2);
 }
 
-/**
- * Funcao para processar uma linha do tipo TIPO do ficheiro
- *
- * * @param rt -> Ponteiro para a lista de regras de tipo
- * * @param temp1 -> Comando
- * * @param temp2 -> Nome do tipo
- * * @param flags_str -> String com as flags
- * * @param linha -> Linha lida
- * * @return res -> OK ou Flag_INVALIDA
- */
 MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,char *linha) {
     RegrasTipo novo = malloc(sizeof(struct regra4));
     inicializarT(novo);
@@ -216,15 +134,6 @@ MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,
     return OK;
 }
 
-/**
- * Funcao para processar uma linha do tipo WIN do ficheiro
- *
- * * @param rw -> Ponteiro para a lista de condicoes de vitoria
- * * @param temp1 -> Comando
- * * @param temp2 -> Tipo de pilha
- * * @param linha -> Linha lida
- * * @return res -> OK ou Comando_INVALIDO
- */
 MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1, char *temp2, char *linha) {
     RegrasWin novo = malloc(sizeof(struct regra6));
     inicializarWin(novo);
@@ -239,15 +148,6 @@ MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1, char *temp2, char *linha) {
     return OK;
 }
 
-/**
- * Funcao para processar a linha JOGO (nome da paciencia)
- *
- * * @param rj -> Estrutura do jogo
- * * @param temp1 -> Comando
- * * @param temp2 -> Nome do jogo
- * * @param linha -> Linha lida
- * * @return res -> OK ou Comando_INVALIDO
- */
 MENSAGENS leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha) {
     if((*rj)->comando != NULL) return Comando_INVALIDO;
     if(sscanf(linha,"%s %s",temp1,temp2) != 2) return Comando_INVALIDO;
@@ -258,14 +158,6 @@ MENSAGENS leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha) {
     return OK;
 }
 
-/**
- * Funcao para processar a linha BARALHOS
- *
- * * @param rb -> Estrutura da regra de baralhos
- * * @param temp1 -> Comando
- * * @param linha -> Linha lida
- * * @return res -> OK ou Comando_INVALIDO
- */
 MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1, char *linha) {
     if((*rb)->comando != NULL) return Comando_INVALIDO;
     if(sscanf(linha,"%s %d",temp1,&(*rb)->numeroDeBaralhos) != 2 || (*rb)->numeroDeBaralhos < 1) return Comando_INVALIDO;
@@ -274,18 +166,6 @@ MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1, char *linha) {
     return OK;
 }
 
-/**
- * Funcao que identifica o comando no inicio da linha e chama o parser adequado
- *
- * * @param x -> Mensagem de retorno
- * * @param f -> Ficheiro aberto
- * * @param rma, rj, rb, rt, ri, rw -> Listas de regras
- * * @param temp1, temp2, temp3 -> Buffers de string
- * * @param flags_str -> Buffer para flags
- * * @param linha -> A linha lida
- * * @param lida -> Resultado do primeiro sscanf
- * * @return res -> OK ou erro
- */
 MENSAGENS verificaLinhaBranco (MENSAGENS x,FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lida){
     if(lida==1) {
        if(strcmp(temp1,"MOV") == 0 || strcmp(temp1,"AUTO") == 0) x = leLinhaMovAuto (rma,temp1,temp2,temp3,flags_str,linha);
@@ -299,13 +179,6 @@ MENSAGENS verificaLinhaBranco (MENSAGENS x,FILE *f,RegrasMovAuto *rma,RegrasJogo
    return x;
 }
 
-/**
- * Funcao que le o ficheiro linha a linha, remove comentarios e chama o processador
- *
- * * @param f -> Ficheiro aberto
- * * @param rma, rj, rb, rt, ri, rw -> Listas de regras
- * * @return res -> OK ou Erro
- */
 MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw) {
     char temp1[200];
     char temp2[200];
@@ -323,13 +196,6 @@ MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *
     return mostrar_mensagem(OK), OK;
 }
 
-/**
- * Funcao que abre o ficheiro de regras na pasta "paciencias" e inicia a leitura
- *
- * * @param nome -> Nome do ficheiro (ex: "golf.txt")
- * * @param listaMA, listaJ, listaB, listaT, listaI, listaW -> Listas de regras de destino
- * * @return res -> OK ou ERRO_CAMINHO_INVALIDO
- */
 MENSAGENS abreFicheiro(char *nome,RegrasMovAuto *listaMA,RegrasJogo *listaJ,RegrasBaralhos *listaB,RegrasTipo *listaT,RegrasInit *listaI,RegrasWin *listaW) {
     (*listaJ)->comando = NULL;
     (*listaJ)->jogoNome = NULL;
@@ -346,11 +212,6 @@ MENSAGENS abreFicheiro(char *nome,RegrasMovAuto *listaMA,RegrasJogo *listaJ,Regr
     return a;
 }
 
-/**
- * Funcao para inicializar o contexto global de regras com valores default
- *
- * * @return res -> Estrutura CONTEXTO inicializada
- */
 CONTEXTO inicializarContexto(void) {
     CONTEXTO c;
     c.ma = NULL;
@@ -362,12 +223,6 @@ CONTEXTO inicializarContexto(void) {
     return c;
 }
 
-/**
- * Funcao para ler a primeira linha do ficheiro "save.txt" para saber que regras carregar
- *
- * * @param nome_paciencia -> Buffer onde sera guardado o nome lido
- * * @return res -> 1 se leu com sucesso, 0 caso contrario
- */
 int lerNomePacienciaDoSave(char *nome_paciencia) {
     FILE *f = fopen("save.txt", "r");
     if (!f) return 0;
@@ -379,11 +234,7 @@ int lerNomePacienciaDoSave(char *nome_paciencia) {
     return 1;
 }
 
-/**
- * Funcao auxiliar para listar todos os ficheiros .txt dentro da pasta "paciencias"
- *
- * * @param d -> Ponteiro para o diretorio aberto
- */
+/* Função auxiliar para imprimir os ficheiros .txt da pasta 'paciencias' */
 static void printPacienciaFiles(DIR *d) {
     struct dirent *dir;
     while ((dir = readdir(d)) != NULL) {
@@ -393,10 +244,7 @@ static void printPacienciaFiles(DIR *d) {
     }
 }
 
-/**
- * Funcao auxiliar para verificar se existe um jogo guardado e informar o utilizador
- *
- */
+/* Função auxiliar para verificar e imprimir a existência de 'save.txt' */
 static void checkAndPrintSaveFile(void) {
     FILE *sv = fopen("save.txt", "r");
     if (sv) {
@@ -405,13 +253,6 @@ static void checkAndPrintSaveFile(void) {
     }
 }
 
-/**
- * Funcao que gere a interface inicial de escolha de ficheiro de paciencia
- *
- * * @param nome -> Buffer para guardar o nome escolhido
- * * @param carregar_save -> Ponteiro para flag de carregamento de save
- * * @return res -> 0 se sucesso, 1 se erro de pasta
- */
 int abrirPastaImprime(char *nome, int *carregar_save) {
     DIR *d = opendir("paciencias");
     if (!d) {
@@ -428,13 +269,6 @@ int abrirPastaImprime(char *nome, int *carregar_save) {
     return 0;
 }
 
-/**
- * Funcao que orquestra a definicao do nome do ficheiro de jogo (novo ou save)
- *
- * * @param nome -> Buffer de destino
- * * @param carregar_save -> Ponteiro para a flag de save
- * * @return res -> 0 se sucesso, 1 se falhou
- */
 int carregarNome(char *nome, int *carregar_save) {
     if (abrirPastaImprime(nome, carregar_save)) return 1;
     if (*carregar_save && !lerNomePacienciaDoSave(nome)) {
