@@ -87,11 +87,21 @@ typedef struct {
     int    capacidade;    /* espaco alocado */
 } PILHA;
 
+/* Snapshot de um estado para undo */
+typedef struct snapshot {
+    CARTA **cartas;
+    int    *tamanhos;
+    int     num_pilhas;
+    struct snapshot *prox;
+} SNAPSHOT;
+
 typedef struct {
     PILHA *pilhas;
     int    num_pilhas;
     BARALHO B;
     int    total_cartas_baralho;
+    RegrasTipo rt;      /* tipos de pilha – para visibilidade e flag 1 */
+    SNAPSHOT  *historico; /* pilha de undo */
 } ESTADO;
 
 void     mostrar_mensagem(MENSAGENS cod);
