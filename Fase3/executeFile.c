@@ -110,23 +110,20 @@ static void moverParaPilha(ESTADO *j, int o, int to, int d_idx, int n, RegrasMov
 
 void tratarPilha(char *input, ESTADO *j, RegrasMovAuto rma) {
     int o_idx, n = 1;
-    char dest_str[20], dummy;
-    if (sscanf(input, " %c %d %19s %d", &dummy, &o_idx, dest_str, &n) < 3) {
+    char dest[20], dummy;
+    if (sscanf(input, " %c %d %19s %d", &dummy, &o_idx, dest, &n) < 3) {
         printf("Comando incompleto! Use: p <origem> <destino> [<n>]\n");
         return;
     }
     int o = o_idx - 1;
     int to = (o >= 0 && o < j->num_pilhas) ? getPilhaTamanho(j, o) : 0;
-    if (to == 0) {
+    if (to <= 0) {
         printf("Origem inválida ou vazia!\n");
-        return;
-    }
-    if (strcmp(dest_str, "f") == 0 || strcmp(dest_str, "d") == 0)
+    } else if (dest[0] == 'f' || dest[0] == 'd') {
         moverParaDescarte(j, o, to, rma);
-    else if (atoi(dest_str) > 0)
-        moverParaPilha(j, o, to, atoi(dest_str), n, rma);
-    else
-        printf("Destino inválido!\n");
+    } else {
+        moverParaPilha(j, o, to, atoi(dest), n, rma);
+    }
 }
 
 void tratarBaralho(ESTADO *j, RegrasMovAuto rma) {
