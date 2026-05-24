@@ -188,10 +188,10 @@ void test_vitoria(void) {
     struct regra6 rw; rw.tipoDePilha = "FUND"; rw.condicaoWin = 1; rw.prox = NULL;
     
     CU_ASSERT_TRUE(condicaoWinSatisfeita(&j, &rw));
-    CU_ASSERT_TRUE(verificarVitoria(&j, &rw));
+    CU_ASSERT_TRUE(verificarWin(&j, &rw));
     
     rw.condicaoWin = 5; /* Fictício: precisa de 5, só tem 1 */
-    CU_ASSERT_FALSE(verificarVitoria(&j, &rw));
+    CU_ASSERT_FALSE(verificarWin(&j, &rw));
     limparEstado(&j);
 }
 
