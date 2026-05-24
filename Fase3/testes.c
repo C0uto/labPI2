@@ -173,9 +173,10 @@ void test_processar_auto(void) {
     CU_ASSERT_EQUAL(j.pilhas[1].tamanho, 1);
     
     pushCarta(&j.pilhas[0], 2);
-    CU_ASSERT_TRUE(tentarAutoEntrePilhas(&j, &r, 0, 1, NULL)); /* Já n é validado V, mas força exec */
+    /* Correção: Como o destino já não está Vazio (falha flag V), isto DEVE retornar Falso */
+    CU_ASSERT_FALSE(tentarAutoEntrePilhas(&j, &r, 0, 1, NULL));
     processarAuto(&j, &r, NULL);
-    CU_ASSERT_EQUAL(j.pilhas[0].tamanho, 1); /* Loop parou pq falhou regra V */
+    CU_ASSERT_EQUAL(j.pilhas[0].tamanho, 1); /* Garante que a carta não foi movida */
     limparEstadoTeste(&j);
 }
 
