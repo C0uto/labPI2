@@ -1347,6 +1347,7 @@ void prepararAmbiente(ESTADO *j, RegrasBaralhos rb, RegrasMovAuto rma, RegrasWin
     printf("Condicoes de vitoria:\n"); imprimirWins(rw);
 }
 
+
 /**
  * Funcao principal que orquestra a execucao do motor de jogo
  *
