@@ -48,7 +48,7 @@ void comandoP(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
         printf("\n[MOV] Movimento executado: %d -> %d (%d cartas)\n", o, d, n);
         mostrarEstado(j);
         processarAuto(j, rma, j->rt);
-        if (verificarVitoria(j, rw)) mostrar_mensagem(WIN);
+        if (verificarWin(j, rw)) mostrar_mensagem(WIN);
     }
 }
 
