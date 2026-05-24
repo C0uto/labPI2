@@ -9,13 +9,14 @@
  * ============================================================ */
 
 const char *card2str(CARTA card) {
-    static const char *valores = "A23456789TJQK";
-    static const char *naipes  = "SHDC";
-    static char res[4];
-    if (card <= 0) { strcpy(res, "  "); return res; }
-    res[0] = valores[(card - 1) % 13];
-    res[1] = naipes[(card  - 1) / 13];
-    res[2] = '\0';
+    char *valor = "A23456789TJQK";
+    char *naipe = "SHDC";
+    if (card == 0) return NULL;
+    int v = (card - 1) % 13;
+    int n = (card - 1) / 13;
+    static char res[3] = {0};
+    res[0] = valor[v];
+    res[1] = naipe[n];
     return res;
 }
 
@@ -38,6 +39,14 @@ CARTA str2card(const char *s) {
         if (suit_char == suits[i]) { n = i; break; }
     if (v < 0 || n < 0) return 0;
     return n * 13 + v + 1;
+    if (!s || !s[0]) return 0;
+    const char *v_p = strchr("A23456789TJQK", s[0]);
+    int v = v_p ? (int)(v_p - "A23456789TJQK") : -1;
+    int off = (s[0] == '1' && s[1] == '0') ? 2 : 1;
+    if (off == 2) v = 9; 
+    const char *s_p = strchr("SHDC", s[off]);
+    int n = s_p ? (int)(s_p - "SHDC") : -1;
+    return (v >= 0 && n >= 0) ? n * 13 + v + 1 : 0;
 }
 
 /* ============================================================
@@ -269,6 +278,21 @@ int validarFlagGrandeK(PILHA *ori, int n, RegrasMovAuto r) {
 }
 
 /* Agrupa validações relativas ao destino */
+int validarFlagsBasicas(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    return validarFlagMenor(ori, des, n, r) && validarFlagMaior(ori, des, n, r) &&
+           validarFlagTil(ori, des, n, r) && validarFlagV(des, r);
+}
+
+int validarFlagsAtributos(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+    return validarFlagM(ori, des, n, r) && validarFlagX(ori, des, n, r) &&
+           validarFlagC(ori, des, n, r) && validarFlagD(ori, des, n, r);
+}
+
+int validarFlagsRanks(PILHA *ori, int n, RegrasMovAuto r) {
+    return validarFlagPequenoA(ori, n, r) && validarFlagGrandeA(ori, n, r) &&
+           validarFlagPequenoK(ori, n, r) && validarFlagGrandeK(ori, n, r);
+}
+
 int validarDestino(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
     if (temFlag(r, '*')) return 1;
     if (!validarFlagMenor(ori, des, n, r))     return 0;
@@ -284,6 +308,9 @@ int validarDestino(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
     if (!validarFlagPequenoK(ori, n, r))       return 0;
     if (!validarFlagGrandeK(ori, n, r))        return 0;
     return 1;
+    return validarFlagsBasicas(ori, des, n, r) &&
+           validarFlagsAtributos(ori, des, n, r) &&
+           validarFlagsRanks(ori, n, r);
 }
 
 /* ============================================================
@@ -339,8 +366,22 @@ int tentarAutoEntrePilhas(ESTADO *j, RegrasMovAuto r, int io, int id) {
     for (; n >= 1; n--) {
         if (!validarSequencia(ori, n, r)) continue;
         if (!validarDestino(ori, des, n, r)) continue;
+int tentarExecutarAuto(ESTADO *j, RegrasMovAuto r, int io, int id, int n) {
+    if (validarSequencia(&j->pilhas[io], n, r) && 
+        validarDestino(&j->pilhas[io], &j->pilhas[id], n, r)) {
         executarMov(j, io, id, n);
         return 1;
+    }
+    return 0;
+}
+
+int tentarAutoEntrePilhas(ESTADO *j, RegrasMovAuto r, int io, int id) {
+    if (strcmp(j->pilhas[io].tipo, r->origem) != 0 || 
+        strcmp(j->pilhas[id].tipo, r->destino) != 0) return 0;
+    int n = temFlag(r, '+') ? j->pilhas[io].tamanho : 1;
+    while (n >= 1) {
+        if (tentarExecutarAuto(j, r, io, id, n)) return 1;
+        n--;
     }
     return 0;
 }
@@ -427,6 +468,12 @@ void carregarLinhaPilha(PILHA *p, char *linha) {
     }
 }
 
+void processarLinhaSave(ESTADO *j, int i, FILE *f) {
+    char linha[512];
+    j->pilhas[i].tamanho = 0;
+    if (fgets(linha, 512, f)) carregarLinhaPilha(&j->pilhas[i], linha);
+}
+
 int carregarJogo(ESTADO *j, RegrasInit ri, RegrasBaralhos rb) {
     FILE *f = fopen("save.txt", "r");
     if (!f) { printf("Sem ficheiro de save.\n"); return 0; }
@@ -437,6 +484,8 @@ int carregarJogo(ESTADO *j, RegrasInit ri, RegrasBaralhos rb) {
         if (fgets(linha, 512, f) == NULL) break;
         carregarLinhaPilha(&j->pilhas[i], linha);
     }
+    fgets(linha, 512, f);
+    for (int i = 0; i < j->num_pilhas; i++) processarLinhaSave(j, i, f);
     fclose(f);
     printf("Jogo carregado de save.txt\n");
     return 1;
@@ -633,6 +682,22 @@ int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma,
     }
     if (buf[0] == 'p') { tratarMover(buf, j, rma, rw); return 1; }
     printf("Comando desconhecido. Use 'h' para ajuda.\n");
+int executarAcaoSistema(char c, ESTADO *j, RegrasInit ri, RegrasBaralhos rb, const char *n) {
+    if (c == 's') gravarJogo(j, n);
+    if (c == 'l') { carregarJogo(j, ri, rb); mostrarEstado(j); }
+    if (c == 'r') { aplicarInitAoEstado(j, ri, j->B); mostrarEstado(j); }
+    return 1;
+}
+
+int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri, 
+                    RegrasBaralhos rb, RegrasWin rw, const char *nome) {
+    char c = buf[0];
+    if (c == 'q') return 0;
+    if (c == 'h') tratarAjuda();
+    else if (c == 'e') mostrarEstado(j);
+    else if (c == 'p') tratarMover(buf, j, rma, rw);
+    else if (strchr("slr", c)) executarAcaoSistema(c, j, ri, rb, nome);
+    else printf("Comando desconhecido. Use 'h' para ajuda.\n");
     return 1;
 }
 
@@ -689,6 +754,15 @@ void limparEstado(ESTADO *j) {
  *  ENTRY POINT
  * ============================================================ */
 
+void prepararAmbiente(ESTADO *j, RegrasBaralhos rb, RegrasMovAuto rma, RegrasWin rw) {
+    int n_baralhos = (rb) ? rb->numeroDeBaralhos : 1;
+    j->B = criarBaralho(n_baralhos);
+    j->total_cartas_baralho = 52 * n_baralhos;
+    baralharBaralho(j->B, n_baralhos);
+    printf("Movimentos validos:\n"); imprimirMovs(rma);
+    printf("Condicoes de vitoria:\n"); imprimirWins(rw);
+}
+
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
              RegrasTipo rt, RegrasInit ri, RegrasWin rw) {
     ESTADO jogo;
@@ -702,6 +776,7 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     jogo.B = criarBaralho(n_baralhos);
     jogo.total_cartas_baralho = 52 * n_baralhos;
     baralharBaralho(jogo.B, rb->numeroDeBaralhos);
+    prepararAmbiente(&jogo, rb, rma, rw);
 
     printf("Movimentos validos:\n"); imprimirMovs(rma);
     printf("Condicoes de vitoria:\n"); imprimirWins(rw);
