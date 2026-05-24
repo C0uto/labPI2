@@ -20,25 +20,7 @@ const char *card2str(CARTA card) {
     return res;
 }
 
-/* Converte string "AS","10H","KD",... para CARTA */
 CARTA str2card(const char *s) {
-    static const char *vals = "A23456789TJQK";
-    static const char *suits = "SHDC";
-    if (!s || s[0] == '\0') return 0;
-    int v = -1, n = -1;
-    for (int i = 0; i < 13; i++)
-        if (s[0] == vals[i]) { v = i; break; }
-    int offset = (s[1] == '0') ? 2 : 1; /* "10x" */
-    if (s[0] == '1' && s[1] == '0') {
-        v = 8; /* valor 10 é índice 8 (A=0..9=8,T=9?) */
-        /* na nossa codificação T=index 9 */
-        v = 9; offset = 2;
-    }
-    char suit_char = s[offset];
-    for (int i = 0; i < 4; i++)
-        if (suit_char == suits[i]) { n = i; break; }
-    if (v < 0 || n < 0) return 0;
-    return n * 13 + v + 1;
     if (!s || !s[0]) return 0;
     const char *v_p = strchr("A23456789TJQK", s[0]);
     int v = v_p ? (int)(v_p - "A23456789TJQK") : -1;
@@ -204,8 +186,7 @@ static CARTA topoSequencia(PILHA *ori, int n) {
 }
 
 /* Carta de fundo da sequência a mover */
-static CARTA fundoSequencia(PILHA *ori, int n) {
-    (void)n;
+static CARTA fundoSequencia(PILHA *ori) {
     return ori->cartas[ori->tamanho - 1];
 }
 
@@ -257,27 +238,8 @@ int validarFlagV(PILHA *des, RegrasMovAuto r) {
     return des->tamanho == 0;
 }
 
-int validarFlagPequenoA(PILHA *ori, int n, RegrasMovAuto r) {
-    if (!temFlag(r, 'a')) return 1;
-    return getValor(fundoSequencia(ori, n)) == 1; /* Ace at the end of moved sequence */
-}
+/* --- HELPERS PARA DESTINO --- */
 
-int validarFlagGrandeA(PILHA *ori, int n, RegrasMovAuto r) {
-    if (!temFlag(r, 'A')) return 1;
-    return getValor(topoSequencia(ori, n)) == 1;  /* Ace at the start of moved sequence */
-}
-
-int validarFlagPequenoK(PILHA *ori, int n, RegrasMovAuto r) {
-    if (!temFlag(r, 'k')) return 1;
-    return getValor(fundoSequencia(ori, n)) == 13; /* King at the end */
-}
-
-int validarFlagGrandeK(PILHA *ori, int n, RegrasMovAuto r) {
-    if (!temFlag(r, 'K')) return 1;
-    return getValor(topoSequencia(ori, n)) == 13; /* King at the start */
-}
-
-/* Agrupa validações relativas ao destino */
 int validarFlagsBasicas(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
     return validarFlagMenor(ori, des, n, r) && validarFlagMaior(ori, des, n, r) &&
            validarFlagTil(ori, des, n, r) && validarFlagV(des, r);
@@ -288,29 +250,19 @@ int validarFlagsAtributos(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
            validarFlagC(ori, des, n, r) && validarFlagD(ori, des, n, r);
 }
 
-int validarFlagsRanks(PILHA *ori, int n, RegrasMovAuto r) {
-    return validarFlagPequenoA(ori, n, r) && validarFlagGrandeA(ori, n, r) &&
-           validarFlagPequenoK(ori, n, r) && validarFlagGrandeK(ori, n, r);
+int validarFlagsRanks(PILHA *o, int n, RegrasMovAuto r) {
+    int a = (temFlag(r, 'a') ? getValor(fundoSequencia(o)) == 1 : 1);
+    int A = (temFlag(r, 'A') ? getValor(topoSequencia(o, n)) == 1 : 1);
+    int k = (temFlag(r, 'k') ? getValor(fundoSequencia(o)) == 13 : 1);
+    int K = (temFlag(r, 'K') ? getValor(topoSequencia(o, n)) == 13 : 1);
+    return a && A && k && K;
 }
 
-int validarDestino(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
+int validarDestino(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
     if (temFlag(r, '*')) return 1;
-    if (!validarFlagMenor(ori, des, n, r))     return 0;
-    if (!validarFlagMaior(ori, des, n, r))     return 0;
-    if (!validarFlagTil(ori, des, n, r))       return 0;
-    if (!validarFlagM(ori, des, n, r))         return 0;
-    if (!validarFlagX(ori, des, n, r))         return 0;
-    if (!validarFlagC(ori, des, n, r))         return 0;
-    if (!validarFlagD(ori, des, n, r))         return 0;
-    if (!validarFlagV(des, r))                 return 0;
-    if (!validarFlagPequenoA(ori, n, r))       return 0;
-    if (!validarFlagGrandeA(ori, n, r))        return 0;
-    if (!validarFlagPequenoK(ori, n, r))       return 0;
-    if (!validarFlagGrandeK(ori, n, r))        return 0;
-    return 1;
-    return validarFlagsBasicas(ori, des, n, r) &&
-           validarFlagsAtributos(ori, des, n, r) &&
-           validarFlagsRanks(ori, n, r);
+    return validarFlagsBasicas(o, d, n, r) && 
+           validarFlagsAtributos(o, d, n, r) && 
+           validarFlagsRanks(o, n, r);
 }
 
 /* ============================================================
@@ -318,17 +270,14 @@ int validarDestino(PILHA *ori, PILHA *des, int n, RegrasMovAuto r) {
  * ============================================================ */
 
 int validarMovimento(ESTADO *j, int io, int id, int n, RegrasMovAuto rma) {
-    if (io < 0 || io >= j->num_pilhas) return 0;
-    if (id < 0 || id >= j->num_pilhas) return 0;
-    if (io == id) return 0;
+    if (io < 0 || io >= j->num_pilhas || id < 0 || id >= j->num_pilhas || io == id) 
+        return 0;
     PILHA *ori = &j->pilhas[io];
     PILHA *des = &j->pilhas[id];
-    if (ori->tamanho < n || n <= 0) return 0;
     RegrasMovAuto r = encontrarRegra(rma, ori->tipo, des->tipo);
-    if (r == NULL) return 0;
-    if (!validarSequencia(ori, n, r)) return 0;
-    if (!validarDestino(ori, des, n, r)) return 0;
-    return 1;
+    return (r && ori->tamanho >= n && n > 0 && 
+            validarSequencia(ori, n, r) && 
+            validarDestino(ori, des, n, r));
 }
 
 /* ============================================================
@@ -354,19 +303,7 @@ int tentarMover(ESTADO *j, int io, int id, int n, RegrasMovAuto rma) {
  *  AUTO
  * ============================================================ */
 
-/* Tenta aplicar uma regra AUTO entre dois índices de pilha */
-int tentarAutoEntrePilhas(ESTADO *j, RegrasMovAuto r, int io, int id) {
-    PILHA *ori = &j->pilhas[io];
-    PILHA *des = &j->pilhas[id];
-    if (strcmp(ori->tipo, r->origem)  != 0) return 0;
-    if (strcmp(des->tipo, r->destino) != 0) return 0;
-    if (ori->tamanho <= 0) return 0;
-    int n = 1;
-    if (temFlag(r, '+')) n = ori->tamanho;
-    for (; n >= 1; n--) {
-        if (!validarSequencia(ori, n, r)) continue;
-        if (!validarDestino(ori, des, n, r)) continue;
-int tentarExecutarAuto(ESTADO *j, RegrasMovAuto r, int io, int id, int n) {
+int executarAutoSeValido(ESTADO *j, RegrasMovAuto r, int io, int id, int n) {
     if (validarSequencia(&j->pilhas[io], n, r) && 
         validarDestino(&j->pilhas[io], &j->pilhas[id], n, r)) {
         executarMov(j, io, id, n);
@@ -380,7 +317,7 @@ int tentarAutoEntrePilhas(ESTADO *j, RegrasMovAuto r, int io, int id) {
         strcmp(j->pilhas[id].tipo, r->destino) != 0) return 0;
     int n = temFlag(r, '+') ? j->pilhas[io].tamanho : 1;
     while (n >= 1) {
-        if (tentarExecutarAuto(j, r, io, id, n)) return 1;
+        if (executarAutoSeValido(j, r, io, id, n)) return 1;
         n--;
     }
     return 0;
@@ -474,22 +411,14 @@ void processarLinhaSave(ESTADO *j, int i, FILE *f) {
     if (fgets(linha, 512, f)) carregarLinhaPilha(&j->pilhas[i], linha);
 }
 
-int carregarJogo(ESTADO *j, RegrasInit ri, RegrasBaralhos rb) {
+int carregarJogo(ESTADO *j) {
     FILE *f = fopen("save.txt", "r");
     if (!f) { printf("Sem ficheiro de save.\n"); return 0; }
-    char linha[512];
-    fgets(linha, 512, f); /* nome da paciência – ignorar */
-    for (int i = 0; i < j->num_pilhas; i++) {
-        j->pilhas[i].tamanho = 0;
-        if (fgets(linha, 512, f) == NULL) break;
-        carregarLinhaPilha(&j->pilhas[i], linha);
-    }
-    fgets(linha, 512, f);
+    char b[512];
+    fgets(b, 512, f); /* skip name */
     for (int i = 0; i < j->num_pilhas; i++) processarLinhaSave(j, i, f);
     fclose(f);
-    printf("Jogo carregado de save.txt\n");
     return 1;
-    (void)ri; (void)rb;
 }
 
 /* ============================================================
@@ -667,25 +596,10 @@ void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
  *  LOOP PRINCIPAL
  * ============================================================ */
 
-int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma,
-                    RegrasInit ri, RegrasBaralhos rb,
-                    RegrasWin rw, const char *nome) {
-    if (buf[0] == 'q') return 0;
-    if (buf[0] == 'h') { tratarAjuda(); return 1; }
-    if (buf[0] == 'e') { mostrarEstado(j); return 1; }
-    if (buf[0] == 's') { gravarJogo(j, nome); return 1; }
-    if (buf[0] == 'l') { carregarJogo(j, ri, rb); mostrarEstado(j); return 1; }
-    if (buf[0] == 'r') {
-        aplicarInitAoEstado(j, ri, j->B);
-        mostrarEstado(j);
-        return 1;
-    }
-    if (buf[0] == 'p') { tratarMover(buf, j, rma, rw); return 1; }
-    printf("Comando desconhecido. Use 'h' para ajuda.\n");
-int executarAcaoSistema(char c, ESTADO *j, RegrasInit ri, RegrasBaralhos rb, const char *n) {
+int acaoSistema(char c, ESTADO *j, RegrasInit ri, const char *n) {
     if (c == 's') gravarJogo(j, n);
-    if (c == 'l') { carregarJogo(j, ri, rb); mostrarEstado(j); }
-    if (c == 'r') { aplicarInitAoEstado(j, ri, j->B); mostrarEstado(j); }
+    else if (c == 'l') { carregarJogo(j); mostrarEstado(j); }
+    else if (c == 'r') { aplicarInitAoEstado(j, ri, j->B); mostrarEstado(j); }
     return 1;
 }
 
@@ -696,8 +610,8 @@ int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
     if (c == 'h') tratarAjuda();
     else if (c == 'e') mostrarEstado(j);
     else if (c == 'p') tratarMover(buf, j, rma, rw);
-    else if (strchr("slr", c)) executarAcaoSistema(c, j, ri, rb, nome);
-    else printf("Comando desconhecido. Use 'h' para ajuda.\n");
+    else if (strchr("slr", c)) acaoSistema(c, j, ri, nome);
+    else printf("Comando desconhecido.\n");
     return 1;
 }
 
@@ -770,21 +684,9 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
 
     const char *nome = (rj && rj->jogoNome) ? rj->jogoNome : "Jogo Desconhecido";
     printf("\n=== %s ===\n", nome);
-
-    int n_baralhos = (rb) ? rb->numeroDeBaralhos : 1;
-    if (n_baralhos < 1) n_baralhos = 1;
-    jogo.B = criarBaralho(n_baralhos);
-    jogo.total_cartas_baralho = 52 * n_baralhos;
-    baralharBaralho(jogo.B, rb->numeroDeBaralhos);
     prepararAmbiente(&jogo, rb, rma, rw);
-
-    printf("Movimentos validos:\n"); imprimirMovs(rma);
-    printf("Condicoes de vitoria:\n"); imprimirWins(rw);
-
     aplicarInitAoEstado(&jogo, ri, jogo.B);
     mostrarEstado(&jogo);
     loopComandos(&jogo, rma, ri, rb, rw, nome);
     limparEstado(&jogo);
-
-    (void)rt; /* RegrasTipo guardada mas não usada no display aqui */
 }

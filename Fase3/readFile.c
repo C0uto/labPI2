@@ -87,11 +87,10 @@ void novaStructMovAuto (RegrasMovAuto novo, char *temp1, char *temp2, char *temp
     strcpy(novo->destino,temp3);
 }
 
-MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lidos) {
+MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha) {
     RegrasMovAuto novo = malloc(sizeof(struct regra));
     inicializarMA(novo);
-    lidos = sscanf(linha,"%s %s %s %s",temp1,temp2,temp3,flags_str);
-    if(lidos != 4) return Comando_INVALIDO;
+    if(sscanf(linha,"%s %s %s %s",temp1,temp2,temp3,flags_str) != 4) return Comando_INVALIDO;
     novaStructMovAuto (novo,temp1,temp2,temp3);
     MENSAGENS x = guardaflagsMA(novo,flags_str);
     if(x==Flag_INVALIDA) return x;
@@ -101,11 +100,10 @@ MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *te
     return OK;
 }
 
-MENSAGENS leLinhaInit (RegrasInit *ri, char *temp1, char *temp2,char *linha,int lidos) {
+MENSAGENS leLinhaInit (RegrasInit *ri, char *temp1, char *temp2, char *linha) {
     RegrasInit novo = malloc(sizeof(struct regra5));
     inicializarInit(novo);
-    lidos = sscanf(linha,"%s %s %d",temp1,temp2,&novo->numeroDeCartas);
-    if(lidos != 3 || novo->numeroDeCartas < 0) return Comando_INVALIDO;
+    if(sscanf(linha,"%s %s %d",temp1,temp2,&novo->numeroDeCartas) != 3 || novo->numeroDeCartas < 0) return Comando_INVALIDO;
     novo->comando = malloc(strlen(temp1) + 1);
     novo->tipoDePilha = malloc(strlen(temp2) + 1);
     strcpy(novo->comando,temp1);
@@ -123,11 +121,10 @@ void novaStructTipo (RegrasTipo novo, char *temp1, char *temp2) {
     strcpy(novo->tipoDePilha,temp2);
 }
 
-MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,char *linha,int lidos) {
+MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,char *linha) {
     RegrasTipo novo = malloc(sizeof(struct regra4));
     inicializarT(novo);
-    lidos = sscanf(linha,"%s %s %s",temp1,temp2,flags_str);
-    if(lidos != 3) return Comando_INVALIDO;
+    if(sscanf(linha,"%s %s %s",temp1,temp2,flags_str) != 3) return Comando_INVALIDO;
     novaStructTipo (novo,temp1,temp2);
     MENSAGENS x = guardaflagsT(novo,flags_str);
     if(x==Flag_INVALIDA) return x;
@@ -137,11 +134,10 @@ MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,
     return OK;
 }
 
-MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1, char *temp2,char *linha,int lidos) {
+MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1, char *temp2, char *linha) {
     RegrasWin novo = malloc(sizeof(struct regra6));
     inicializarWin(novo);
-    lidos = sscanf(linha,"%s %s %d",temp1,temp2,&novo->condicaoWin);
-    if(lidos != 3 || novo->condicaoWin < 0) return Comando_INVALIDO;
+    if(sscanf(linha,"%s %s %d",temp1,temp2,&novo->condicaoWin) != 3 || novo->condicaoWin < 0) return Comando_INVALIDO;
     novo->comando = malloc(strlen(temp1) + 1);
     novo->tipoDePilha = malloc(strlen(temp2) + 1);
     strcpy(novo->comando,temp1);
@@ -152,10 +148,9 @@ MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1, char *temp2,char *linha,int li
     return OK;
 }
 
-MENSAGENS leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha,int lidos) {
+MENSAGENS leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha) {
     if((*rj)->comando != NULL) return Comando_INVALIDO;
-    lidos = sscanf(linha,"%s %s",temp1,temp2);
-    if(lidos != 2) return Comando_INVALIDO;
+    if(sscanf(linha,"%s %s",temp1,temp2) != 2) return Comando_INVALIDO;
     (*rj)->comando = malloc(strlen(temp1) + 1);
     (*rj)->jogoNome = malloc(strlen(temp2) + 1);
     strcpy((*rj)->comando,temp1);
@@ -163,10 +158,9 @@ MENSAGENS leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha,int 
     return OK;
 }
 
-MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1,char *linha,int lidos) {
+MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1, char *linha) {
     if((*rb)->comando != NULL) return Comando_INVALIDO;
-    lidos = sscanf(linha,"%s %d",temp1,&(*rb)->numeroDeBaralhos);
-    if(lidos != 2 || (*rb)->numeroDeBaralhos < 1) return Comando_INVALIDO;
+    if(sscanf(linha,"%s %d",temp1,&(*rb)->numeroDeBaralhos) != 2 || (*rb)->numeroDeBaralhos < 1) return Comando_INVALIDO;
     (*rb)->comando = malloc(strlen(temp1) + 1);
     strcpy((*rb)->comando,temp1);
     return OK;
@@ -174,12 +168,12 @@ MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1,char *linha,int lidos)
 
 MENSAGENS verificaLinhaBranco (MENSAGENS x,FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lida){
     if(lida==1) {
-       if(strcmp(temp1,"MOV") == 0 || strcmp(temp1,"AUTO") == 0) x = leLinhaMovAuto (rma,temp1,temp2,temp3,flags_str,linha,lida);
-       else if(strcmp(temp1,"INIT") == 0) x = leLinhaInit (ri,temp1,temp2,linha,lida);
-       else if(strcmp(temp1,"TIPO") == 0) x = leLinhaTipo (rt, temp1,temp2,flags_str,linha,lida);
-       else if(strcmp(temp1,"WIN") == 0) x = leLinhaWin (rw,temp1,temp2,linha,lida);
-       else if(strcmp(temp1,"JOGO") == 0) x = leLinhaJogo (rj,temp1,temp2,linha,lida);
-       else if(strcmp(temp1,"BARALHOS") == 0) x = leLinhaBaralho (rb,temp1,linha,lida);
+       if(strcmp(temp1,"MOV") == 0 || strcmp(temp1,"AUTO") == 0) x = leLinhaMovAuto (rma,temp1,temp2,temp3,flags_str,linha);
+       else if(strcmp(temp1,"INIT") == 0) x = leLinhaInit (ri,temp1,temp2,linha);
+       else if(strcmp(temp1,"TIPO") == 0) x = leLinhaTipo (rt, temp1,temp2,flags_str,linha);
+       else if(strcmp(temp1,"WIN") == 0) x = leLinhaWin (rw,temp1,temp2,linha);
+       else if(strcmp(temp1,"JOGO") == 0) x = leLinhaJogo (rj,temp1,temp2,linha);
+       else if(strcmp(temp1,"BARALHOS") == 0) x = leLinhaBaralho (rb,temp1,linha);
        else return Comando_INVALIDO;
    }
    return x;

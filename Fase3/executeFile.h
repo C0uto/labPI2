@@ -40,7 +40,7 @@ int verificarVitoria(ESTADO *j, RegrasWin rw);
 
 /* Save / Load */
 void gravarJogo(ESTADO *j, const char *nome_paciencia);
-int  carregarJogo(ESTADO *j, RegrasInit ri, RegrasBaralhos rb);
+int  carregarJogo(ESTADO *j);
 
 /* Display */
 void imprimirTabuleiro(ESTADO *j);
@@ -49,4 +49,3 @@ void mostrarEstado(ESTADO *j);
 /* Loop principal */
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
              RegrasTipo rt, RegrasInit ri, RegrasWin rw);
-
