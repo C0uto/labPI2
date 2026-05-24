@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
-#include "readFile.h" // Inclui types.h indiretamente
+#include "readFile.h"
 
 const FEEDBACK tabela_mensagens[] = {
         {OK, "\n"},
