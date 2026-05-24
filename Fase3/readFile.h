@@ -1,3 +1,6 @@
+#ifndef READFILE_H
+#define READFILE_H
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -119,3 +122,5 @@ MENSAGENS abreFicheiro(char *nome, RegrasMovAuto *listaMA, RegrasJogo *listaJ,
 int       abrirPastaImprime(char *nome, int *carregar_save);
 int       lerNomePacienciaDoSave(char *nome_paciencia);
 int       carregarNome(char *nome, int *carregar_save);
+
+#endif /* READFILE_H */
