@@ -274,10 +274,21 @@ int validarMovimento(ESTADO *j, int io, int id, int n, RegrasMovAuto rma) {
         return 0;
     PILHA *ori = &j->pilhas[io];
     PILHA *des = &j->pilhas[id];
-    RegrasMovAuto r = encontrarRegra(rma, ori->tipo, des->tipo);
-    return (r && ori->tamanho >= n && n > 0 && 
-            validarSequencia(ori, n, r) && 
-            validarDestino(ori, des, n, r));
+
+    // Iterar por todas as regras para o par origem-destino
+    RegrasMovAuto aux = rma;
+    while (aux != NULL) {
+        if (strcmp(aux->comando, "MOV") == 0 &&
+            strcmp(aux->origem,  ori->tipo)   == 0 &&
+            strcmp(aux->destino, des->tipo)   == 0) {
+            // Se esta regra específica valida o movimento, retorna verdadeiro
+            if (ori->tamanho >= n && n > 0 && validarSequencia(ori, n, aux) && validarDestino(ori, des, n, aux)) {
+                return 1;
+            }
+        }
+        aux = aux->prox;
+    }
+    return 0; // Nenhuma regra validou o movimento
 }
 
 /* ============================================================
