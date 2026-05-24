@@ -63,4 +63,5 @@ typedef struct {
 
 MENSAGENS leFicheiro(FILE *f, RegrasMovAuto *rma, RegrasJogo *rj, RegrasBaralhos *rb, RegrasTipo *rt, RegrasInit *ri, RegrasWin *rw);
 void mostrar_mensagem(MENSAGENS msg);
-
+int abrirPastaImprime(char *nome);
+Mensagens abreFicheiro(char *nome, RegrasMovAuto *listaMA, RegrasJogo *listaJ, RegrasBaralhos *listaB, RegrasTipo *listaT, RegrasInit *listaI, RegrasWin *listaW);
