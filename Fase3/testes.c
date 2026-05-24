@@ -24,7 +24,7 @@ void prepEstado(ESTADO *j) {
     }
 }
 
-void limparEstado(ESTADO *j) {
+void limparEstadoTeste(ESTADO *j) {
     free(j->pilhas[0].cartas);
     free(j->pilhas[1].cartas);
     free(j->pilhas);
