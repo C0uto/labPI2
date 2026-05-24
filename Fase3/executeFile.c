@@ -477,7 +477,7 @@ void printLinha(ESTADO *j, int lin, int sup) {
     for (int i = 0; i < j->num_pilhas; i++) {
         if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) {
             if (lin < j->pilhas[i].tamanho)
-                printf(" %s\t", card2str(j->pilhas[i].cartas[lin]));
+                printf("  %s\t", card2str(j->pilhas[i].cartas[lin]));
             else
                 printf(" \t");
         }
