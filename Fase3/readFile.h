@@ -101,9 +101,21 @@ typedef struct {
     SNAPSHOT  *historico; /* pilha de undo */
 } ESTADO;
 
-void     mostrar_mensagem(MENSAGENS cod);
+/* Agrupa todas as listas de regras para simplificar passagem entre funcoes */
+typedef struct {
+    RegrasMovAuto  ma;
+    RegrasJogo     rj;
+    RegrasBaralhos rb;
+    RegrasTipo     rt;
+    RegrasInit     ri;
+    RegrasWin      rw;
+} CONTEXTO;
+
+void      mostrar_mensagem(MENSAGENS cod);
+CONTEXTO  inicializarContexto(void);
 MENSAGENS abreFicheiro(char *nome, RegrasMovAuto *listaMA, RegrasJogo *listaJ,
                         RegrasBaralhos *listaB, RegrasTipo *listaT,
                         RegrasInit *listaI, RegrasWin *listaW);
-int      abrirPastaImprime(char *nome, int *carregar_save);
-int      lerNomePacienciaDoSave(char *nome_paciencia);
+int       abrirPastaImprime(char *nome, int *carregar_save);
+int       lerNomePacienciaDoSave(char *nome_paciencia);
+int       carregarNome(char *nome, int *carregar_save);

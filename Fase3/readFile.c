@@ -212,6 +212,17 @@ MENSAGENS abreFicheiro(char *nome,RegrasMovAuto *listaMA,RegrasJogo *listaJ,Regr
     return a;
 }
 
+CONTEXTO inicializarContexto(void) {
+    CONTEXTO c;
+    c.ma = NULL;
+    c.rj = malloc(sizeof(struct regra2));
+    c.rb = malloc(sizeof(struct regra3));
+    c.rt = NULL;
+    c.ri = NULL;
+    c.rw = NULL;
+    return c;
+}
+
 int lerNomePacienciaDoSave(char *nome_paciencia) {
     FILE *f = fopen("save.txt", "r");
     if (!f) return 0;
@@ -242,5 +253,14 @@ int abrirPastaImprime(char *nome, int *carregar_save) {
     scanf("%s", nome);
     while (getchar() != '\n');
     *carregar_save = (strcmp(nome, "save.txt") == 0);
+    return 0;
+}
+
+int carregarNome(char *nome, int *carregar_save) {
+    if (abrirPastaImprime(nome, carregar_save)) return 1;
+    if (*carregar_save && !lerNomePacienciaDoSave(nome)) {
+        printf("Erro: nao foi possivel ler o nome da paciencia do save.txt\n");
+        return 1;
+    }
     return 0;
 }
