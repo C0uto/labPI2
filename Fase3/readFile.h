@@ -53,7 +53,7 @@ typedef enum {
         ERRO_JOGADA_INVALIDA,
         WIN,
         GAME_OVER,
-        ERRO_CAMPO_INVALIDO
+        ERRO_CAMINHO_INVALIDO
 } MENSAGENS;
 
 // estrutura para associar a numeracao com uma mensagem
