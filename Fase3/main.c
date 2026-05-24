@@ -17,7 +17,7 @@ int main () {
     if (a == OK) {
         execute(listaMA, listaJ, listaB, listaT, listaI, listaW);
     } else {
-        printf("Erro ao processar o ficheiro de regras (Codigo: %d).\n", a);
+        mostrar_mensagem(a);
     }
 
     return 0;
