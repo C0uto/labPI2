@@ -145,21 +145,29 @@ void test_dest_ranks(void) {
  * TESTES GRUPO 3: Movimentação, Auto e Tipos
  * ============================================================ */
 
-void test_movimentos_e_tipos(void) {
+void test_tipos(void) {
+    struct regra4 rt;
+    memset(&rt, 0, sizeof(struct regra4));
+    rt.tipoDePilha = "FUND";
+    strcpy(rt.flags[0], "1");
+    strcpy(rt.flags[1], "1");
+    
+    CU_ASSERT_TRUE(tipoTemFlag1(&rt, "FUND"));
+    CU_ASSERT_FALSE(tipoTemFlag1(&rt, "TAB"));
+}
+
+void test_movimentos(void) {
     ESTADO j; prepEstado(&j);
     struct regra r; prepRegra(&r, "V", "1");
-    struct regra4 rt;
-    rt.tipoDePilha = "FUND"; strcpy(rt.flags[0], "1"); strcpy(rt.flags[1], "1");
-    rt.prox = NULL;
     
     pushCarta(&j.pilhas[0], 1);
-    CU_ASSERT_TRUE(tipoTemFlag1(&rt, "FUND"));
     CU_ASSERT_TRUE(validarMovimento(&j, 0, 1, 1, &r, NULL));
-    
     executarMov(&j, 0, 1, 1);
+    
     CU_ASSERT_EQUAL(j.pilhas[0].tamanho, 0);
     CU_ASSERT_EQUAL(j.pilhas[1].tamanho, 1);
-    CU_ASSERT_FALSE(tentarMover(&j, 0, 1, 1, &r, NULL)); /* Já está vazia */
+    CU_ASSERT_FALSE(tentarMover(&j, 0, 1, 1, &r, NULL));
+    
     limparEstadoTeste(&j);
 }
 
@@ -210,7 +218,8 @@ void registar_grupo_a(CU_pSuite pS) {
 void registar_grupo_b(CU_pSuite pS) {
     CU_add_test(pS, "Destino (Atributos)", test_dest_atributos);
     CU_add_test(pS, "Destino (Ranks)", test_dest_ranks);
-    CU_add_test(pS, "Movimentos", test_movimentos_e_tipos);
+    CU_add_test(pS, "Regras de Tipo", test_tipos);           /* NOVO */
+    CU_add_test(pS, "Movimentos Fisicos", test_movimentos);  /* NOVO */
     CU_add_test(pS, "Movimentos Auto", test_processar_auto);
     CU_add_test(pS, "Vitoria", test_vitoria);
 }
