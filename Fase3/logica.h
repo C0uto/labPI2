@@ -35,6 +35,6 @@ int tentarAutoUmaVez(ESTADO *j, RegrasMovAuto rma, RegrasTipo rt);
 void processarAuto(ESTADO *j, RegrasMovAuto rma, RegrasTipo rt);
 int contarCartasTipo(ESTADO *j, const char *tipo);
 int condicaoWinSatisfeita(ESTADO *j, RegrasWin rw);
-int verificarVitoria(ESTADO *j, RegrasWin rw);
+int verificarWin(ESTADO *j, RegrasWin rw);
 
 #endif
