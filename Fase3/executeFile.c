@@ -250,22 +250,22 @@ int validarFlagV(PILHA *des, RegrasMovAuto r) {
 
 int validarFlagPequenoA(PILHA *ori, int n, RegrasMovAuto r) {
     if (!temFlag(r, 'a')) return 1;
-    return getValor(topoSequencia(ori, n)) == 1; /* As = valor 1 */
+    return getValor(fundoSequencia(ori, n)) == 1; /* Ace at the end of moved sequence */
 }
 
 int validarFlagGrandeA(PILHA *ori, int n, RegrasMovAuto r) {
     if (!temFlag(r, 'A')) return 1;
-    return getValor(fundoSequencia(ori, n)) == 1;
+    return getValor(topoSequencia(ori, n)) == 1;  /* Ace at the start of moved sequence */
 }
 
 int validarFlagPequenoK(PILHA *ori, int n, RegrasMovAuto r) {
     if (!temFlag(r, 'k')) return 1;
-    return getValor(topoSequencia(ori, n)) == 13; /* Rei = valor 13 */
+    return getValor(fundoSequencia(ori, n)) == 13; /* King at the end */
 }
 
 int validarFlagGrandeK(PILHA *ori, int n, RegrasMovAuto r) {
     if (!temFlag(r, 'K')) return 1;
-    return getValor(fundoSequencia(ori, n)) == 13;
+    return getValor(topoSequencia(ori, n)) == 13; /* King at the start */
 }
 
 /* Agrupa validações relativas ao destino */
@@ -359,7 +359,14 @@ int tentarAutoUmaVez(ESTADO *j, RegrasMovAuto rma) {
 }
 
 void processarAuto(ESTADO *j, RegrasMovAuto rma) {
-    while (tentarAutoUmaVez(j, rma));
+    int encontrou;
+    do {
+        encontrou = tentarAutoUmaVez(j, rma);
+        if (encontrou) {
+            printf("\n[AUTO] Movimento automatico executado.\n");
+            mostrarEstado(j);
+        }
+    } while (encontrou);
 }
 
 /* ============================================================
@@ -578,9 +585,9 @@ void tratarMover(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
     if (!tentarMover(j, o - 1, d - 1, n, rma))
         printf("Movimento invalido!\n");
     else {
+        printf("\n[MOV] Movimento executado: %d -> %d (%d cartas)\n", o, d, n);
         mostrarEstado(j);
         processarAuto(j, rma);
-        mostrarEstado(j);
         if (verificarVitoria(j, rw)) mostrar_mensagem(WIN);
     }
 }
