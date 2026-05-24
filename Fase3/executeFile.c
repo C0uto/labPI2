@@ -269,14 +269,20 @@ int validarDestino(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
  *  VALIDAÇÃO COMPLETA DE UM MOVIMENTO
  * ============================================================ */
 
+static int indicesValidos(ESTADO *j, int io, int id, int n) {
+    if (io < 0 || io >= j->num_pilhas || id < 0 || id >= j->num_pilhas) return 0;
+    return (io != id && n > 0);
+}
+
+static int regraValida(PILHA *o, PILHA *d, int n, RegrasMovAuto r) {
+    if (strcmp(r->comando, "MOV") || strcmp(r->origem, o->tipo) || strcmp(r->destino, d->tipo)) return 0;
+    return (o->tamanho >= n && validarSequencia(o, n, r) && validarDestino(o, d, n, r));
+}
+
 int validarMovimento(ESTADO *j, int io, int id, int n, RegrasMovAuto rma) {
-    if (io < 0 || io >= j->num_pilhas || id < 0 || id >= j->num_pilhas || io == id || n <= 0) return 0;
-    PILHA *o = &j->pilhas[io], *d = &j->pilhas[id];
-    for (RegrasMovAuto r = rma; r; r = r->prox) {
-        if (!strcmp(r->comando, "MOV") && !strcmp(r->origem, o->tipo) && !strcmp(r->destino, d->tipo))
-            if (o->tamanho >= n && validarSequencia(o, n, r) && validarDestino(o, d, n, r))
-                return 1;
-    }
+    if (!indicesValidos(j, io, id, n)) return 0;
+    for (RegrasMovAuto r = rma; r; r = r->prox)
+        if (regraValida(&j->pilhas[io], &j->pilhas[id], n, r)) return 1;
     return 0;
 }
 
