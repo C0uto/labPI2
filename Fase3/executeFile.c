@@ -61,7 +61,21 @@ int getPilhaTamanho(ESTADO *j, int col) {
     return i;
 }
 
-void moverCartas(ESTADO *j, int o, int d, int n) {
+int existeRegraMov(RegrasMovAuto rma, const char *origem, const char *destino) {
+    RegrasMovAuto aux = rma;
+    while (aux != NULL) {
+        if (aux->origem && aux->destino &&
+            strcmp(aux->origem, origem) == 0 &&
+            strcmp(aux->destino, destino) == 0) {
+            return 1;
+        }
+        aux = aux->prox;
+    }
+    return 0;
+}
+
+void moverCartas(ESTADO *j, int o, int d, int n, RegrasMovAuto rma) {
+    (void)rma; // Por agora apenas move, a validação de flags virá depois
     int to = getPilhaTamanho(j, o);
     int td = getPilhaTamanho(j, d);
     for (int i = 0; i < n; i++) {
@@ -71,9 +85,15 @@ void moverCartas(ESTADO *j, int o, int d, int n) {
     mostrarEstado(j);
 }
 
-void tratarPilha(char *input, ESTADO *j) {
+void tratarPilha(char *input, ESTADO *j, RegrasMovAuto rma) {
     int o_idx, d_idx, n = 1; 
     char dummy;
+
+    if (!existeRegraMov(rma, "TAB", "TAB")) {
+        printf("Jogada inválida! Não é permitido mover cartas entre pilhas do tabuleiro neste jogo.\n");
+        return;
+    }
+
     int res = sscanf(input, " %c %d %d %d", &dummy, &o_idx, &d_idx, &n);
     if (res < 3) {
         printf("Comando incompleto! Tenta o formato: p <origem> <destino> [<cartas>]\n");
@@ -85,10 +105,16 @@ void tratarPilha(char *input, ESTADO *j) {
         printf("Jogada inválida!\n");
         return;
     }
-    moverCartas(j, o, d, n);
+    moverCartas(j, o, d, n, rma);
 }
 
-void tratarBaralho(ESTADO *j) {
+void tratarBaralho(ESTADO *j, RegrasMovAuto rma) {
+    // O comando 'b' retira do Stock para a Fundação/Descarte
+    if (!existeRegraMov(rma, "STOCK", "DESCARTE") && !existeRegraMov(rma, "STOCK", "FUND")) {
+        printf("\nErro: Não é permitido retirar cartas do baralho neste jogo.\n");
+        return;
+    }
+
     if (j->B == NULL || j->cartas_no_baralho <= 0) {
         printf("\nErro: Operação inválida. O baralho não existe ou está vazio.\n");
         return;
@@ -111,7 +137,13 @@ void tratarAjuda() {
 
 void imprimirTipos(RegrasTipo rt) {
     while (rt != NULL) {
-        printf("   - TIPO %s %s\n", rt->tipoDePilha, rt->flags[0]);
+        printf("   - TIPO %s ", rt->tipoDePilha);
+        for (int i = 0; rt->flags[0][i] != '\0'; i++) {
+            if (rt->flags[1][i] == '1') {
+                printf("%c", rt->flags[0][i]);
+            }
+        }
+        printf("\n");
         rt = rt->prox;
     }
 }
@@ -125,7 +157,13 @@ void imprimirInits(RegrasInit ri) {
 
 void imprimirMovs(RegrasMovAuto rma) {
     while (rma != NULL) {
-        printf("   - %s %s %s %s\n", rma->comando, rma->origem, rma->destino, rma->flags[0]);
+        printf("   - %s %s %s ", rma->comando, rma->origem, rma->destino);
+        for (int i = 0; rma->flags[0][i] != '\0'; i++) {
+            if (rma->flags[1][i] == '1') {
+                printf("%c", rma->flags[0][i]);
+            }
+        }
+        printf("\n");
         rma = rma->prox;
     }
 }
@@ -237,7 +275,7 @@ void processarNoInit(RegrasInit ri, ESTADO *j, int *col_tab, BARALHO d, int *idx
 
 void aplicarInit(RegrasInit ri, ESTADO *jogo, BARALHO deck) {
     if (ri == NULL) return;
-    printf("4. [INIT] Inicializando pilhas:\n");
+    printf("4. [INIT] Pilhas:\n");
     
     int n_pilhas = contarColunasTab(ri);
     int max_altura = encontrarMaxCartasInit(ri);
@@ -265,7 +303,7 @@ void aplicarTipo(RegrasTipo rt) {
 
 void aplicarMovAuto(RegrasMovAuto rma) {
     if (rma) {
-        printf("5. [MOV/AUTO] Movimentos automáticos:\n");
+        printf("5. [MOV/AUTO] Movimentos:\n");
         imprimirMovs(rma);
     }
 }
@@ -289,15 +327,15 @@ void limparEstado(ESTADO *jogo) {
 
 typedef struct {
     char tecla;
-    void (*funcao)(char *, ESTADO *);
+    void (*funcao)(char *, ESTADO *, RegrasMovAuto);
 } COMANDO_INFO;
 
 // Wrappers para uniformizar as assinaturas das funções de comando
-void cmd_baralho(char *s, ESTADO *j) { (void)s; tratarBaralho(j); }
-void cmd_estado(char *s, ESTADO *j) { (void)s; mostrarEstado(j); }
-void cmd_ajuda(char *s, ESTADO *j) { (void)s; (void)j; tratarAjuda(); }
+void cmd_baralho(char *s, ESTADO *j, RegrasMovAuto rma) { (void)s; tratarBaralho(j, rma); }
+void cmd_estado(char *s, ESTADO *j, RegrasMovAuto rma) { (void)s; (void)rma; mostrarEstado(j); }
+void cmd_ajuda(char *s, ESTADO *j, RegrasMovAuto rma) { (void)s; (void)j; (void)rma; tratarAjuda(); }
 
-void processarComando(char *buf, ESTADO *j) {
+void processarComando(char *buf, ESTADO *j, RegrasMovAuto rma) {
     COMANDO_INFO comandos[] = {
         {'p', tratarPilha},
         {'b', cmd_baralho},
@@ -311,7 +349,7 @@ void processarComando(char *buf, ESTADO *j) {
 
     while (comandos[i].tecla != 0 && !encontrado) {
         if (buf[0] == comandos[i].tecla) {
-            comandos[i].funcao(buf, j);
+            comandos[i].funcao(buf, j, rma);
             encontrado = 1;
         }
         i++;
@@ -322,18 +360,18 @@ void processarComando(char *buf, ESTADO *j) {
     }
 }
 
-int executarEntrada(char *buf, ESTADO *j, RegrasInit ri, BARALHO deck) {
+int executarEntrada(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri, BARALHO deck) {
     if (buf[0] == 'q') return 0;
     if (buf[0] == 'r') {
         aplicarInit(ri, j, deck);
         mostrarEstado(j);
     } else {
-        processarComando(buf, j);
+        processarComando(buf, j, rma);
     }
     return 1;
 }
 
-void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck, const char *nome_jogo) {
+void loopComandos(ESTADO *j, RegrasMovAuto rma, RegrasInit ri, BARALHO originalDeck, const char *nome_jogo) {
     char buf[256];
     int continuar = 1;
     while (continuar) {
@@ -343,7 +381,7 @@ void loopComandos(ESTADO *j, RegrasInit ri, BARALHO originalDeck, const char *no
         } else {
             buf[strcspn(buf, "\n")] = 0;
             if (buf[0] != '\0') {
-                continuar = executarEntrada(buf, j, ri, originalDeck);
+                continuar = executarEntrada(buf, j, rma, ri, originalDeck);
             }
         }
     }
@@ -364,6 +402,6 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     aplicarWin(rw);
     printf("============= REGRAS APLICADAS ==============\n\n");
     mostrarEstado(&jogo);
-    loopComandos(&jogo, ri, jogo.B, rj->jogoNome);
+    loopComandos(&jogo, rma, ri, jogo.B, rj->jogoNome);
     limparEstado(&jogo);
 }
