@@ -44,13 +44,18 @@ int condicaoWinSatisfeita(ESTADO *j, RegrasWin rw);
 int verificarVitoria(ESTADO *j, RegrasWin rw);
 
 /* Save / Load */
+void gravarPilha(FILE *f, PILHA *p);
 void gravarJogo(ESTADO *j, const char *nome_paciencia);
 int  carregarJogo(ESTADO *j);
 
 /* Display */
 char visibilidadeTipo(RegrasTipo rt, const char *tipo);
+void printCelula(ESTADO *j, int i, int lin);
 void imprimirTabuleiro(ESTADO *j);
 void mostrarEstado(ESTADO *j);
+
+/* Loop principal */
+void tratarUndo(ESTADO *j);
 
 /* Loop principal */
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,

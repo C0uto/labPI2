@@ -407,16 +407,21 @@ int verificarVitoria(ESTADO *j, RegrasWin rw) {
  *  SAVE / LOAD
  * ============================================================ */
 
+void gravarPilha(FILE *f, PILHA *p) {
+    for (int k = 0; k < p->tamanho; k++) {
+        char buf[4];
+        card2str(p->cartas[k], buf);
+        fprintf(f, "%s ", buf);
+    }
+    fprintf(f, "\n");
+}
+
 void gravarJogo(ESTADO *j, const char *nome_paciencia) {
     FILE *f = fopen("save.txt", "w");
     if (!f) { printf("Erro ao gravar.\n"); return; }
     fprintf(f, "%s\n", nome_paciencia);
-    for (int i = 0; i < j->num_pilhas; i++) {
-        for (int k = 0; k < j->pilhas[i].tamanho; k++)
-            char buf[4]; card2str(j->pilhas[i].cartas[k], buf);
-            fprintf(f, "%s ", buf);
-        fprintf(f, "\n");
-    }
+    for (int i = 0; i < j->num_pilhas; i++)
+        gravarPilha(f, &j->pilhas[i]);
     fclose(f);
     printf("Jogo gravado em save.txt\n");
 }
@@ -493,20 +498,24 @@ char visibilidadeTipo(RegrasTipo rt, const char *tipo) {
     return '='; /* default: todas visíveis */
 }
 
+void printCelula(ESTADO *j, int i, int lin) {
+    PILHA *p = &j->pilhas[i];
+    if (lin >= p->tamanho) { printf("               "); return; }
+    char vis = visibilidadeTipo(j->rt, p->tipo);
+    int mostrar = (vis == '=') || (vis == '^' && lin == p->tamanho - 1);
+    if (mostrar) {
+        char buf[4];
+        card2str(p->cartas[lin], buf);
+        printf("      %-2s       ", buf);
+    } else {
+        printf("      **       ");
+    }
+}
+
 void printLinha(ESTADO *j, int lin, int sup) {
     for (int i = 0; i < j->num_pilhas; i++) {
-        if (ehGrupoSuperior(j->pilhas[i].tipo) != sup) continue;
-        PILHA *p = &j->pilhas[i];
-        if (lin >= p->tamanho) { printf("               "); continue; }
-        char vis = visibilidadeTipo(j->rt, p->tipo);
-        int topo = p->tamanho - 1;
-        int mostrar = (vis == '=') || (vis == '^' && lin == topo);
-        if (mostrar) {
-            char buf[4]; card2str(p->cartas[lin], buf);
-            printf("      %-2s       ", buf);
-        } else {
-            printf("      **       ");
-        }
+        if (ehGrupoSuperior(j->pilhas[i].tipo) == sup)
+            printCelula(j, i, lin);
     }
     printf("\n");
 }
@@ -694,14 +703,18 @@ int acaoSistema(char c, ESTADO *j, RegrasInit ri, const char *n) {
     return 1;
 }
 
-int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri, 
+void tratarUndo(ESTADO *j) {
+    if (restaurarSnapshot(j)) mostrarEstado(j);
+}
+
+int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
                     RegrasBaralhos rb, RegrasWin rw, const char *nome) {
     char c = buf[0];
     if (c == 'q') return 0;
     if (c == 'h') tratarAjuda();
     else if (c == 'e') mostrarEstado(j);
     else if (c == 'p') tratarMover(buf, j, rma, rw);
-    else if (c == 'u') { if (restaurarSnapshot(j)) mostrarEstado(j); }
+    else if (c == 'u') tratarUndo(j);
     else if (strchr("slr", c)) acaoSistema(c, j, ri, nome);
     else printf("Comando desconhecido.\n");
     return 1;
