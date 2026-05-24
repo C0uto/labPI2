@@ -465,7 +465,7 @@ int printCabecalho(ESTADO *j, int sup) {
     int c = 0;
     for (int i = 0; i < j->num_pilhas; i++) {
         if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) {
-            printf("[%d:%s]\t", i + 1, j->pilhas[i].tipo);
+            printf("[%d:%s]   ", i + 1, j->pilhas[i].tipo);
             c++;
         }
     }
@@ -477,9 +477,9 @@ void printLinha(ESTADO *j, int lin, int sup) {
     for (int i = 0; i < j->num_pilhas; i++) {
         if (ehGrupoSuperior(j->pilhas[i].tipo) == sup) {
             if (lin < j->pilhas[i].tamanho)
-                printf(" %s\t", card2str(j->pilhas[i].cartas[lin]));
+                printf(" %s   ", card2str(j->pilhas[i].cartas[lin]));
             else
-                printf(" \t");
+                printf("    ");
         }
     }
     printf("\n");
