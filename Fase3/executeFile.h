@@ -56,6 +56,7 @@ void mostrarEstado(ESTADO *j);
 
 /* Loop principal */
 void tratarUndo(ESTADO *j);
+void prepararAmbiente(ESTADO *j, RegrasBaralhos rb, RegrasMovAuto rma, RegrasWin rw);
 
 /* Loop principal */
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,

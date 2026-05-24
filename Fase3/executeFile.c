@@ -782,6 +782,15 @@ void limparEstado(ESTADO *j) {
  *  ENTRY POINT
  * ============================================================ */
 
+void prepararAmbiente(ESTADO *j, RegrasBaralhos rb, RegrasMovAuto rma, RegrasWin rw) {
+    int n_baralhos = (rb) ? rb->numeroDeBaralhos : 1;
+    j->B = criarBaralho(n_baralhos);
+    j->total_cartas_baralho = 52 * n_baralhos;
+    baralharBaralho(j->B, n_baralhos);
+    printf("Movimentos validos:\n"); imprimirMovs(rma);
+    printf("Condicoes de vitoria:\n"); imprimirWins(rw);
+}
+
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
              RegrasTipo rt, RegrasInit ri, RegrasWin rw) {
     ESTADO jogo;
