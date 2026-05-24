@@ -541,13 +541,15 @@ void preencherPilha(PILHA *p, const char *tipo, BARALHO deck,
 
 void aplicarInitAoEstado(ESTADO *j, RegrasInit ri, BARALHO deck) {
     int n = contarInits(ri);
+    if (n == 0 || deck == NULL) return;
+    
     inicializarPilhas(j, n);
     /* percorre do último para o primeiro (lista foi construída por prepend) */
     RegrasInit cur = ultimoInit(ri);
     int idx = 0, col = 0;
     while (cur != NULL && col < n) {
-        preencherPilha(&j->pilhas[col], cur->tipoDePilha, deck, &idx, cur->numeroDeCartas);
-        col++;
+        if (cur->tipoDePilha)
+            preencherPilha(&j->pilhas[col++], cur->tipoDePilha, deck, &idx, cur->numeroDeCartas);
         cur = cur->ant;
     }
 }
@@ -610,7 +612,8 @@ void loopComandos(ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
     char buf[256];
     int continuar = 1;
     while (continuar) {
-        printf("%s> ", nome);
+        const char *display_nome = (nome) ? nome : "Paciencia";
+        printf("%s> ", display_nome);
         if (fgets(buf, 256, stdin) == NULL) break;
         buf[strcspn(buf, "\n")] = '\0';
         if (buf[0] != '\0')
@@ -662,8 +665,12 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     ESTADO jogo;
     memset(&jogo, 0, sizeof(ESTADO));
 
-    printf("\n=== %s ===\n", rj->jogoNome);
-    jogo.B = criarBaralho(rb->numeroDeBaralhos);
+    const char *nome = (rj && rj->jogoNome) ? rj->jogoNome : "Jogo Desconhecido";
+    printf("\n=== %s ===\n", nome);
+
+    int n_baralhos = (rb) ? rb->numeroDeBaralhos : 1;
+    if (n_baralhos < 1) n_baralhos = 1;
+    jogo.B = criarBaralho(n_baralhos);
     jogo.total_cartas_baralho = 52 * rb->numeroDeBaralhos;
     baralharBaralho(jogo.B, rb->numeroDeBaralhos);
 
@@ -672,7 +679,7 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
 
     aplicarInitAoEstado(&jogo, ri, jogo.B);
     mostrarEstado(&jogo);
-    loopComandos(&jogo, rma, ri, rb, rw, rj->jogoNome);
+    loopComandos(&jogo, rma, ri, rb, rw, nome);
     limparEstado(&jogo);
 
     (void)rt; /* RegrasTipo guardada mas não usada no display aqui */
