@@ -1,15 +1,24 @@
 #include <stdio.h>
-#include <dirent.h>
 #include <stdlib.h>
 #include "executeFile.h"
 
-int main() {
-    CONTEXTO ctx = inicializarContexto();
+int main(void) {
+    RegrasMovAuto listaMA = NULL;
+    RegrasJogo    listaJ  = malloc(sizeof(struct regra2));
+    RegrasBaralhos listaB = malloc(sizeof(struct regra3));
+    RegrasTipo    listaT  = NULL;
+    RegrasInit    listaI  = NULL;
+    RegrasWin     listaW  = NULL;
     char nome[100];
-    int carregar_save = 0;
-    if (carregarNome(nome, &carregar_save)) return 1;
-    MENSAGENS a = abreFicheiro(nome, &ctx.ma, &ctx.rj, &ctx.rb, &ctx.rt, &ctx.ri, &ctx.rw);
-    if (a == OK) execute(ctx.ma, ctx.rj, ctx.rb, ctx.rt, ctx.ri, ctx.rw, carregar_save);
-    else printf("Erro ao processar o ficheiro de regras (Codigo: %d).\n", a);
+
+    if (abrirPastaImprime(nome) != 0) return 1;
+
+    MENSAGENS a = abreFicheiro(nome, &listaMA, &listaJ, &listaB,
+                                &listaT, &listaI, &listaW);
+    if (a == OK)
+        execute(listaMA, listaJ, listaB, listaT, listaI, listaW, 0);
+    else
+        printf("Erro ao processar ficheiro (codigo: %d).\n", a);
+
     return 0;
 }
