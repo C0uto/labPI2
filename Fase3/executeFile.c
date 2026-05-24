@@ -429,8 +429,9 @@ void gravarJogo(ESTADO *j, const char *nome_paciencia) {
 /* Lê uma linha de save e preenche a pilha */
 void carregarLinhaPilha(PILHA *p, char *linha) {
     char token[8];
-    int pos = 0;
-    while (sscanf(linha + pos, "%7s%n", token, &pos) == 1) {
+    int pos = 0, delta = 0;
+    while (sscanf(linha + pos, "%7s%n", token, &delta) == 1) {
+        pos += delta;
         CARTA c = str2card(token);
         if (c > 0) pushCarta(p, c);
     }
