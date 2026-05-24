@@ -172,8 +172,7 @@ MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1,char *linha,int lidos)
     return OK;
 }
 
-MENSAGENS verificaLinhaBranco (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lida){
-    MENSAGENS x;
+MENSAGENS verificaLinhaBranco (MENSAGENS x,FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha,int lida){
     if(lida==1) {
        if(strcmp(temp1,"MOV") == 0 || strcmp(temp1,"AUTO") == 0) x = leLinhaMovAuto (rma,temp1,temp2,temp3,flags_str,linha,lida);
        else if(strcmp(temp1,"INIT") == 0) x = leLinhaInit (ri,temp1,temp2,linha,lida);
@@ -182,9 +181,8 @@ MENSAGENS verificaLinhaBranco (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasB
        else if(strcmp(temp1,"JOGO") == 0) x = leLinhaJogo (rj,temp1,temp2,linha,lida);
        else if(strcmp(temp1,"BARALHOS") == 0) x = leLinhaBaralho (rb,temp1,linha,lida);
        else return Comando_INVALIDO;
-       if(x==Flag_INVALIDA || x == Comando_INVALIDO) return x;
    }
-   return OK;
+   return x;
 }
 
 MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *rb,RegrasTipo *rt,RegrasInit *ri,RegrasWin *rw) {
@@ -194,11 +192,12 @@ MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *
     char linha[256];
     char flags_str[50];
     int lida = 0;
+    MENSAGENS x = OK;
     while(fgets(linha,256,f)!=NULL) {
       char *coment = strchr(linha, '#');//o strchr procura a primeira ocorrência do caractere # dentro da string. Se encontrar, devolve um ponteiro para essa posição dentro da própria string.
       if (coment != NULL) *coment = '\0';//vejo se o ponteiro não é null, ou seja se existe '#' e se existir coloco '\0' para apagar os comentários
       lida = sscanf(linha,"%s",temp1);
-      MENSAGENS x = verificaLinhaBranco (f,rma,rj,rb,rt,ri,rw,temp1,temp2,temp3,flags_str,linha,lida);
+      x = verificaLinhaBranco (x,f,rma,rj,rb,rt,ri,rw,temp1,temp2,temp3,flags_str,linha,lida);
       if(x!=OK) return mostrar_mensagem(x), x;
     }
     return mostrar_mensagem(OK), OK;
