@@ -419,7 +419,7 @@ void gravarPilha(FILE *f, PILHA *p) {
 void gravarJogo(ESTADO *j, const char *nome_paciencia) {
     FILE *f = fopen("save.txt", "w");
     if (!f) { printf("Erro ao gravar.\n"); return; }
-    fprintf(f, "%s\n", nome_paciencia);
+    fprintf(f, "%s.txt\n", nome_paciencia);
     for (int i = 0; i < j->num_pilhas; i++)
         gravarPilha(f, &j->pilhas[i]);
     fclose(f);
