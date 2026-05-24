@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include "executeFile.h"
 
+/**
+ * Funcao principal (Entry Point) que inicializa o contexto e arranca o jogo
+ *
+ * * @return res -> 0 se o programa terminou normalmente
+ */
 int main() {
     CONTEXTO ctx = inicializarContexto();
     char nome[100];
