@@ -66,12 +66,13 @@ int getPilhaTamanho(ESTADO *j, int col) {
     return i;
 }
 
-int existeRegraMov(RegrasMovAuto rma, const char *origem, const char *destino) {
+int existeRegraMov(RegrasMovAuto rma, const char *cmd, const char *ori, const char *des) {
     RegrasMovAuto aux = rma;
     while (aux != NULL) {
-        if (aux->origem && aux->destino &&
-            strcmp(aux->origem, origem) == 0 &&
-            strcmp(aux->destino, destino) == 0) {
+        if (aux->comando && aux->origem && aux->destino &&
+            strcmp(aux->comando, cmd) == 0 &&
+            strcmp(aux->origem, ori) == 0 &&
+            strcmp(aux->destino, des) == 0) {
             return 1;
         }
         aux = aux->prox;
@@ -91,7 +92,7 @@ void moverCartas(ESTADO *j, int o, int d, int n, RegrasMovAuto rma) {
 }
 
 void moverParaDescarte(ESTADO *j, int o, int to, RegrasMovAuto rma) {
-    if (existeRegraMov(rma, "TAB", "DESCARTE") || existeRegraMov(rma, "TAB", "FUND")) {
+    if (existeRegraMov(rma, "MOV", "TAB", "DESCARTE") || existeRegraMov(rma, "MOV", "TAB", "FUND")) {
         j->fundacao = j->paciencia[o][to - 1];
         j->paciencia[o][to - 1] = 0;
         mostrarEstado(j);
@@ -101,7 +102,7 @@ void moverParaDescarte(ESTADO *j, int o, int to, RegrasMovAuto rma) {
 }
 
 void moverParaPilha(ESTADO *j, int o, int to, int d_idx, int n, RegrasMovAuto rma) {
-    if (!existeRegraMov(rma, "TAB", "TAB")) {
+    if (!existeRegraMov(rma, "MOV", "TAB", "TAB")) {
         printf("Não é permitido mover cartas entre colunas.\n");
         return;
     }
@@ -157,7 +158,7 @@ void tratarPilha(char *input, ESTADO *j, RegrasMovAuto rma) {
 
 void tratarBaralho(ESTADO *j, RegrasMovAuto rma) {
     // O comando 'b' retira do Stock para a Fundação/Descarte
-    if (!existeRegraMov(rma, "STOCK", "DESCARTE") && !existeRegraMov(rma, "STOCK", "FUND")) {
+    if (!existeRegraMov(rma, "MOV", "STOCK", "DESCARTE") && !existeRegraMov(rma, "MOV", "STOCK", "FUND")) {
         printf("\nErro: Não é permitido retirar cartas do baralho neste jogo.\n");
         return;
     }
