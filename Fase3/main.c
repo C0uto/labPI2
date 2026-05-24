@@ -22,7 +22,7 @@ int main () {
     struct dirent *dir;
     while ((dir = readdir(d)) != NULL) {
         int len = strlen(dir->d_name);
-        if (len > 10 && strcmp(dir->d_name + len - 10, ".paciencia") == 0)
+        if (len > 10 && strcmp(dir->d_name + len - 10, ".txt") == 0)
         printf("%s\n", dir->d_name);
     }
     closedir(d);
