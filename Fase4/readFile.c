@@ -475,16 +475,20 @@ int abrirPastaImprime(char *nome, int *carregar_save) {
 /**
  * Funcao que orquestra a definicao do nome do ficheiro de jogo (novo ou save)
  *
- * * @param nome -> Buffer de destino
+ * * @param nome_regras -> Buffer para o ficheiro de regras (.txt)
+ * * @param nome_save -> Buffer para o nome do ficheiro de save (.save)
  * * @param carregar_save -> Ponteiro para a flag de save
  * * @return res -> 0 se sucesso, 1 se falhou
  *
  */
-int carregarNome(char *nome, int *carregar_save) {
-    if (abrirPastaImprime(nome, carregar_save)) return 1;
-    if (*carregar_save && !lerNomeDoJogoDoSave(nome)) {
-        mostrar_mensagem(ERRO_CARREGAR_SAVE);
-        return 1;
+int carregarNome(char *nome_regras, char *nome_save, int *carregar_save) {
+    if (abrirPastaImprime(nome_regras, carregar_save)) return 1;
+    if (*carregar_save) {
+        strcpy(nome_save, nome_regras); // Preserva o nome do save digitado
+        if (!lerNomeDoJogoDoSave(nome_save, nome_regras)) {
+            mostrar_mensagem(ERRO_CARREGAR_SAVE);
+            return 1;
+        }
     }
     return 0;
 }
