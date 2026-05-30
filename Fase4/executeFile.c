@@ -17,7 +17,7 @@ void comandoH(void) {
     printf("  p <origem> <destino> [n] - Move n cartas (default 1) da pilha oirgem para a pilha destino\n");
     printf("  u             - Desfaz a ultima jogada (undo)\n");
     printf("  e             - Mostra o estado actual\n");
-    printf("  s             - Grava o jogo\n");
+    printf("  s [nome]      - Grava o jogo (opcionalmente com um nome especifico)\n");
     printf("  r             - Reinicia o jogo\n");
     printf("  h             - Mostra esta ajuda\n");
     printf("  q             - Sair do jogo\n");
@@ -56,15 +56,25 @@ void comandoP(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasWin rw) {
 /**
  * Funcao para tratar comandos de sistema (save, reset)
  *
- * * @param c -> Carater do comando
+ * * @param buf -> Buffer completo do comando
  * * @param j -> Estado
  * * @param ri -> Regras Init
  * * @param n -> Nome da paciencia
+ * * @param save_name -> Nome do save atual (carregado no inicio)
  * * @return res -> 1 para continuar o programa
  */
-int comandoSR(char c, ESTADO *j, RegrasInit ri, const char *n) {
-    if (c == 's') gravarJogo(j, n);
-    else if (c == 'r') { aplicarInitAoEstado(j, ri, j->B); mostrarEstado(j); }
+int comandoSR(char *buf, ESTADO *j, RegrasInit ri, const char *n, const char *save_name) {
+    char c = buf[0];
+    if (c == 's') {
+        char novo_save[100];
+        if (sscanf(buf + 1, " %s", novo_save) == 1)
+            gravarJogo(j, n, novo_save);
+        else
+            gravarJogo(j, n, save_name);
+    } else if (c == 'r') { 
+        aplicarInitAoEstado(j, ri, j->B); 
+        mostrarEstado(j); 
+    }
     return 1;
 }
 
@@ -90,14 +100,14 @@ void comandoU(ESTADO *j) {
  * * @return res -> 1 se o loop deve continuar, 0 se deve sair
  */
 int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
-                    RegrasBaralhos rb, RegrasWin rw, const char *nome) {
+                    RegrasBaralhos rb, RegrasWin rw, const char *nome, const char *save_name) {
     char c = buf[0];
     if (c == 'q') return 0;
     if (c == 'h') comandoH();
     else if (c == 'e') mostrarEstado(j);
     else if (c == 'p') comandoP(buf, j, rma, rw);
     else if (c == 'u') comandoU(j);
-    else if (strchr("sr", c)) comandoSR(c, j, ri, nome);
+    else if (strchr("sr", c)) comandoSR(buf, j, ri, nome, save_name);
     else printf("Comando desconhecido.\n");
     return 1;
 }
@@ -113,7 +123,7 @@ int executarComando(char *buf, ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
  * * @param nome -> Nome paciencia
  */
 void loopComandos(ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
-                  RegrasBaralhos rb, RegrasWin rw, const char *nome) {
+                  RegrasBaralhos rb, RegrasWin rw, const char *nome, const char *save_name) {
     char buf[256];
     int continuar = 1;
     int input_ok = 1;
@@ -125,7 +135,7 @@ void loopComandos(ESTADO *j, RegrasMovAuto rma, RegrasInit ri,
         } else {
             buf[strcspn(buf, "\n")] = '\0';
             if (buf[0] != '\0')
-                continuar = executarComando(buf, j, rma, ri, rb, rw, nome);
+                continuar = executarComando(buf, j, rma, ri, rb, rw, nome, save_name);
         }
     }
 }
@@ -160,7 +170,7 @@ void prepararAmbiente(ESTADO *j, RegrasBaralhos rb, RegrasMovAuto rma, RegrasWin
  * * @param carregar_save -> Flag para saber se deve carregar de ficheiro
  */
 void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
-             RegrasTipo rt, RegrasInit ri, RegrasWin rw, int carregar_save) {
+             RegrasTipo rt, RegrasInit ri, RegrasWin rw, int carregar_save, const char *save_name) {
     ESTADO jogo;
     memset(&jogo, 0, sizeof(ESTADO));
     jogo.rt = rt;
@@ -170,8 +180,8 @@ void execute(RegrasMovAuto rma, RegrasJogo rj, RegrasBaralhos rb,
     printf("\n=== %s ===\n", nome);
     prepararAmbiente(&jogo, rb, rma, rw);
     aplicarInitAoEstado(&jogo, ri, jogo.B);
-    if (carregar_save) carregarJogo(&jogo);
+    if (carregar_save) carregarJogo(&jogo, save_name);
     mostrarEstado(&jogo);
-    loopComandos(&jogo, rma, ri, rb, rw, nome);
+    loopComandos(&jogo, rma, ri, rb, rw, nome, save_name);
     limparEstado(&jogo);
 }

@@ -14,6 +14,7 @@ const FEEDBACK tabela_mensagens[] = {
         {Comando_INVALIDO, "Comando invalido!"},
         {Flag_INVALIDA, "Flag invalida!"},
         {ERRO_CAMINHO_INVALIDO, "Caminho invalido!"},
+        {ERRO_CARREGAR_SAVE, "Erro ao carregar o ficheiro de save."},
         {0, NULL}
 };
 
@@ -390,20 +391,23 @@ CONTEXTO inicializarContexto(void) {
 }
 
 /**
- * Funcao para ler a primeira linha do ficheiro "save.txt" para saber que regras carregar
+ * Funcao para ler a primeira linha do ficheiro de save para saber que regras carregar
  *
- * * @param nome_paciencia -> Buffer onde sera guardado o nome lido
+ * * @param nome_save -> Nome do ficheiro .save a abrir
+ * * @param nome_regras -> Buffer onde sera guardado o nome lido (ex: Golf.txt)
  * * @return res -> 1 se leu com sucesso, 0 caso contrario
  *
  */
-int lerNomeDoJogoDoSave(char *nome_paciencia) {
-    FILE *f = fopen("save.txt", "r");
+int lerNomeDoJogoDoSave(char *nome_save, char *nome_regras) {
+    char caminho[200];
+    sprintf(caminho, "saves/%s", nome_save);
+    FILE *f = fopen(caminho, "r");
     if (!f) return 0;
     char linha[200];
     if (!fgets(linha, 200, f)) { fclose(f); return 0; }
     fclose(f);
     linha[strcspn(linha, "\n")] = '\0';
-    strcpy(nome_paciencia, linha);
+    strcpy(nome_regras, linha);
     return 1;
 }
 
@@ -423,19 +427,22 @@ static void listarFicheirosPaciencia(DIR *d) {
 }
 
 /**
- * Funcao auxiliar para verificar se existe um jogo guardado e informar o utilizador
+ * Funcao auxiliar para listar todos os ficheiros .save dentro da pasta "saves"
+ *
+ * * @param d -> Ponteiro para o diretorio aberto
  *
  */
-static void temFicheiroSave(void) {
-    FILE *sv = fopen("save.txt", "r");
-    if (sv) {
-        printf("save.txt\n");
-        fclose(sv);
+static void listarFicheirosSave(DIR *d) {
+    struct dirent *dir;
+    while ((dir = readdir(d)) != NULL) {
+        int len = strlen(dir->d_name);
+        if (len >= 4 && strcmp(dir->d_name + len - 4, ".save") == 0)
+            printf("%s\n", dir->d_name);
     }
 }
 
 /**
- * Funcao que gere a interface inicial de escolha de ficheiro de paciencia
+ * Funcao que gere a interface inicial de escolha de ficheiro de paciencia e save
  *
  * * @param nome -> Buffer para guardar o nome escolhido
  * * @param carregar_save -> Ponteiro para flag de carregamento de save
@@ -450,11 +457,18 @@ int abrirPastaImprime(char *nome, int *carregar_save) {
     }
     listarFicheirosPaciencia(d);
     closedir(d);
-    temFicheiroSave();
-    printf("Escolha uma paciencia (ou save.txt para carregar jogo gravado): ");
+    DIR *d_save = opendir("saves");
+    if (!d_save) {
+        printf("Erro: pasta 'saves' nao encontrada.\n");
+        return 1;
+    }
+    listarFicheirosSave(d_save);
+    closedir(d_save);
+    printf("Escolha uma paciencia ou um save para carregar o jogo gravado: ");
     scanf("%s", nome);
     while (getchar() != '\n');
-    *carregar_save = (strcmp(nome, "save.txt") == 0);
+    size_t len = strlen(nome);
+    *carregar_save = (len >= 5 && strcmp(nome + len - 5, ".save") == 0);
     return 0;
 }
 
@@ -469,7 +483,7 @@ int abrirPastaImprime(char *nome, int *carregar_save) {
 int carregarNome(char *nome, int *carregar_save) {
     if (abrirPastaImprime(nome, carregar_save)) return 1;
     if (*carregar_save && !lerNomeDoJogoDoSave(nome)) {
-        printf("Erro: nao foi possivel ler o nome da paciencia do save.txt\n");
+        mostrarmensagem(ERRO_CARREGAR_SAVE);
         return 1;
     }
     return 0;

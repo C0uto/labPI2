@@ -22,19 +22,22 @@ void gravarPilha(FILE *f, PILHA *p) {
 }
 
 /**
- * Funcao para guardar o estado atual do jogo num ficheiro chamado "save.txt"
+ * Funcao para guardar o estado atual do jogo num ficheiro chamado .save
  *
  * * @param j -> Estado do jogo
  * * @param nome_paciencia -> Nome da paciencia atual para guardar no topo do ficheiro
  */
-void gravarJogo(ESTADO *j, const char *nome_paciencia) {
-    FILE *f = fopen("save.txt", "w");
+void gravarJogo(ESTADO *j, const char *nome_paciencia, const char *filename) {
+    char caminho[200];
+    const char *target = (filename && strlen(filename) > 0) ? filename : "save.save";
+    sprintf(caminho, "saves/%s", target);
+    FILE *f = fopen(caminho, "w");
     if (!f) { printf("Erro ao gravar.\n"); return; }
     fprintf(f, "%s.txt\n", nome_paciencia);
     for (int i = 0; i < j->num_pilhas; i++)
         gravarPilha(f, &j->pilhas[i]);
     fclose(f);
-    printf("Jogo gravado em save.txt\n");
+    printf("Jogo gravado em %s\n", target);
 }
 
 /**
@@ -72,8 +75,10 @@ void processarLinhaSave(ESTADO *j, int i, FILE *f) {
  * * @param j -> Estado do jogo
  * * @return res -> 1 se carregou com sucesso, 0 caso contrario
  */
-int carregarJogo(ESTADO *j) {
-    FILE *f = fopen("save.txt", "r");
+int carregarJogo(ESTADO *j, const char *filename) {
+    char caminho[200];
+    sprintf(caminho, "saves/%s", filename);
+    FILE *f = fopen(caminho, "r");
     if (!f) { printf("Sem ficheiro de save.\n"); return 0; }
     char b[512];
     fgets(b, 512, f); /* skip name line */
@@ -262,4 +267,3 @@ void limparEstado(ESTADO *j) {
         libertarSnapshot(s);
     }
 }
-
