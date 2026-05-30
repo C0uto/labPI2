@@ -19,7 +19,8 @@ typedef enum {
     GAME_OVER,
     Comando_INVALIDO,
     Flag_INVALIDA,
-    ERRO_CAMINHO_INVALIDO
+    ERRO_CAMINHO_INVALIDO,
+    ERRO_CARREGAR_SAVE
 } MENSAGENS;
 
 typedef struct {
@@ -120,7 +121,7 @@ MENSAGENS abreFicheiro(char *nome, RegrasMovAuto *listaMA, RegrasJogo *listaJ,
                         RegrasBaralhos *listaB, RegrasTipo *listaT,
                         RegrasInit *listaI, RegrasWin *listaW);
 int       abrirPastaImprime(char *nome, int *carregar_save);
-int       lerNomeDoJogoDoSave(char *nome_save, char *nome_regras);
-int       carregarNome(char *nome_regras, char *nome_save, int *carregar_save);
+int       lerNomePacienciaDoSave(char *nome_paciencia);
+int       carregarNome(char *nome, int *carregar_save);
 
 #endif /* READFILE_H */

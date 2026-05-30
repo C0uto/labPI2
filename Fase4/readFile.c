@@ -483,7 +483,7 @@ int abrirPastaImprime(char *nome, int *carregar_save) {
 int carregarNome(char *nome, int *carregar_save) {
     if (abrirPastaImprime(nome, carregar_save)) return 1;
     if (*carregar_save && !lerNomeDoJogoDoSave(nome)) {
-        mostrarmensagem(ERRO_CARREGAR_SAVE);
+        mostrar_mensagem(ERRO_CARREGAR_SAVE);
         return 1;
     }
     return 0;
