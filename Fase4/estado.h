@@ -4,10 +4,10 @@
 #include "readFile.h"
 
 void gravarPilha(FILE *f, PILHA *p);
-void gravarJogo(ESTADO *j, const char *nome_paciencia);
+void gravarJogo(ESTADO *j, const char *nome_paciencia, const char *filename);
 void carregarLinhaPilha(PILHA *p, char *linha);
 void processarLinhaSave(ESTADO *j, int i, FILE *f);
-int carregarJogo(ESTADO *j);
+int carregarJogo(ESTADO *j, const char *filename);
 BARALHO criarBaralho(int n_baralhos);
 void baralharBaralho(BARALHO b, int n_baralhos);
 int contarInits(RegrasInit ri);
