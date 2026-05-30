@@ -10,8 +10,8 @@
  */
 int main() {
     CONTEXTO ctx = inicializarContexto();
-    char nome[100];      // Ex: Golf.txt
-    char save_name[100] = ""; // Ex: jogo1.save
+    char nome[100];      
+    char save_name[100] = ""; 
     int carregar_save = 0;
     if (carregarNome(nome, save_name, &carregar_save)) return 1;
     MENSAGENS a = abreFicheiro(nome, &ctx.ma, &ctx.rj, &ctx.rb, &ctx.rt, &ctx.ri, &ctx.rw);

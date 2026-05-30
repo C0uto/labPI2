@@ -435,8 +435,8 @@ static void listarFicheirosPaciencia(DIR *d) {
 static void listarFicheirosSave(DIR *d) {
     struct dirent *dir;
     while ((dir = readdir(d)) != NULL) {
-        int len = strlen(dir->d_name);
-        if (len >= 4 && strcmp(dir->d_name + len - 4, ".save") == 0)
+        size_t len = strlen(dir->d_name);
+        if (len >= 5 && strcmp(dir->d_name + len - 5, ".save") == 0)
             printf("%s\n", dir->d_name);
     }
 }
