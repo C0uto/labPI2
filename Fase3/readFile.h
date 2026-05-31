@@ -2,6 +2,7 @@
 
 void      mostrar_mensagem(MENSAGENS cod);
 CONTEXTO  inicializarContexto(void);
+void      libertarContexto(CONTEXTO *c);
 MENSAGENS abreFicheiro(char *nome, RegrasMovAuto *listaMA, RegrasJogo *listaJ,
                         RegrasBaralhos *listaB, RegrasTipo *listaT,
                         RegrasInit *listaI, RegrasWin *listaW);

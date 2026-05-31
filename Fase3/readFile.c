@@ -50,6 +50,76 @@ void inicializarWin(RegrasWin r) {
     r->prox = NULL;
 }
 
+void libertarRegrasMovAuto(RegrasMovAuto r) {
+    while (r) {
+        RegrasMovAuto next = r->prox;
+        free(r->comando);
+        free(r->origem);
+        free(r->destino);
+        free(r);
+        r = next;
+    }
+}
+
+void libertarRegrasTipo(RegrasTipo rt) {
+    while (rt) {
+        RegrasTipo next = rt->prox;
+        free(rt->comando);
+        free(rt->tipoDePilha);
+        free(rt);
+        rt = next;
+    }
+}
+
+void libertarRegrasInit(RegrasInit ri) {
+    while (ri) {
+        RegrasInit next = ri->prox;
+        free(ri->comando);
+        free(ri->tipoDePilha);
+        free(ri);
+        ri = next;
+    }
+}
+
+void libertarRegrasWin(RegrasWin rw) {
+    while (rw) {
+        RegrasWin next = rw->prox;
+        free(rw->comando);
+        free(rw->tipoDePilha);
+        free(rw);
+        rw = next;
+    }
+}
+
+void libertarRegrasJogo(RegrasJogo rj) {
+    if (!rj) return;
+    free(rj->comando);
+    free(rj->jogoNome);
+    free(rj);
+}
+
+void libertarRegrasBaralhos(RegrasBaralhos rb) {
+    if (!rb) return;
+    free(rb->comando);
+    free(rb);
+}
+
+void libertarContexto(CONTEXTO *c) {
+    if (!c) return;
+    libertarRegrasMovAuto(c->ma);
+    libertarRegrasTipo(c->rt);
+    libertarRegrasInit(c->ri);
+    libertarRegrasWin(c->rw);
+    libertarRegrasJogo(c->rj);
+    libertarRegrasBaralhos(c->rb);
+    c->ma = NULL;
+    c->rj = NULL;
+    c->rb = NULL;
+    c->rt = NULL;
+    c->ri = NULL;
+    c->rw = NULL;
+}
+
 MENSAGENS guardaflagsMA (RegrasMovAuto r, char *flags_str) {
     for(int i = 0; flags_str[i]!='\0';i++) {
         int encontrado = 0;
@@ -87,13 +157,24 @@ void novaStructMovAuto (RegrasMovAuto novo, char *temp1, char *temp2, char *temp
     strcpy(novo->destino,temp3);
 }
 
+void limpaNovaStructMovAuto (RegrasMovAuto novo) {
+    free(novo->comando);
+    free(novo->origem);
+    free(novo->destino);
+    free(novo);
+}
+
 MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *temp3,char *flags_str,char *linha) {
+    if (sscanf(linha,"%s %s %s %s",temp1,temp2,temp3,flags_str) != 4) return Comando_INVALIDO;
     RegrasMovAuto novo = malloc(sizeof(struct regra));
+    if (!novo) return Comando_INVALIDO;
     inicializarMA(novo);
-    if(sscanf(linha,"%s %s %s %s",temp1,temp2,temp3,flags_str) != 4) return Comando_INVALIDO;
     novaStructMovAuto (novo,temp1,temp2,temp3);
     MENSAGENS x = guardaflagsMA(novo,flags_str);
-    if(x==Flag_INVALIDA) return x;
+    if(x==Flag_INVALIDA) {
+        limpaNovaStructMovAuto (novo);
+        return x;
+    }
     novo->prox = *rma;
     if (*rma) (*rma)->ant = novo;
     *rma = novo;
@@ -101,9 +182,12 @@ MENSAGENS leLinhaMovAuto (RegrasMovAuto *rma, char *temp1, char *temp2, char *te
 }
 
 MENSAGENS leLinhaInit (RegrasInit *ri, char *temp1, char *temp2, char *linha) {
+    int numeroDeCartas;
+    if(sscanf(linha,"%s %s %d",temp1,temp2,&numeroDeCartas) != 3 || numeroDeCartas < 0) return Comando_INVALIDO;
     RegrasInit novo = malloc(sizeof(struct regra5));
+    if (!novo) return Comando_INVALIDO;
     inicializarInit(novo);
-    if(sscanf(linha,"%s %s %d",temp1,temp2,&novo->numeroDeCartas) != 3 || novo->numeroDeCartas < 0) return Comando_INVALIDO;
+    novo->numeroDeCartas = numeroDeCartas;
     novo->comando = malloc(strlen(temp1) + 1);
     novo->tipoDePilha = malloc(strlen(temp2) + 1);
     strcpy(novo->comando,temp1);
@@ -121,13 +205,23 @@ void novaStructTipo (RegrasTipo novo, char *temp1, char *temp2) {
     strcpy(novo->tipoDePilha,temp2);
 }
 
+void limpaNovaStructTipo (RegrasTipo novo) {
+        free(novo->comando);
+        free(novo->tipoDePilha);
+        free(novo);
+}
+
 MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,char *linha) {
+    if (sscanf(linha,"%s %s %s",temp1,temp2,flags_str) != 3) return Comando_INVALIDO;
     RegrasTipo novo = malloc(sizeof(struct regra4));
+    if (!novo) return Comando_INVALIDO;
     inicializarT(novo);
-    if(sscanf(linha,"%s %s %s",temp1,temp2,flags_str) != 3) return Comando_INVALIDO;
     novaStructTipo (novo,temp1,temp2);
     MENSAGENS x = guardaflagsT(novo,flags_str);
-    if(x==Flag_INVALIDA) return x;
+    if(x==Flag_INVALIDA) {
+        limpaNovaStructTipo (novo);
+        return x;
+    }
     novo->prox = *rt;
     if (*rt) (*rt)->ant = novo;
     *rt = novo;
@@ -135,9 +229,12 @@ MENSAGENS leLinhaTipo (RegrasTipo *rt, char *temp1, char *temp2,char *flags_str,
 }
 
 MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1, char *temp2, char *linha) {
+    int condicaoWin;
+    if (sscanf(linha,"%s %s %d",temp1,temp2,&condicaoWin) != 3 || condicaoWin < 0) return Comando_INVALIDO;
     RegrasWin novo = malloc(sizeof(struct regra6));
+    if (!novo) return Comando_INVALIDO;
     inicializarWin(novo);
-    if(sscanf(linha,"%s %s %d",temp1,temp2,&novo->condicaoWin) != 3 || novo->condicaoWin < 0) return Comando_INVALIDO;
+    novo->condicaoWin = condicaoWin;
     novo->comando = malloc(strlen(temp1) + 1);
     novo->tipoDePilha = malloc(strlen(temp2) + 1);
     strcpy(novo->comando,temp1);
@@ -148,9 +245,32 @@ MENSAGENS leLinhaWin (RegrasWin *rw, char *temp1, char *temp2, char *linha) {
     return OK;
 }
 
+MENSAGENS verificaLimpaLinhaJogo (RegrasJogo *rj, int *criado) {
+    if (*rj == NULL) {
+        *rj = malloc(sizeof(struct regra2));
+        if (!*rj) return Comando_INVALIDO;
+        (*rj)->comando = NULL;
+        (*rj)->jogoNome = NULL;
+        *criado = 1;
+    }
+    if((*rj)->comando != NULL) {
+        if (*criado) free(*rj);
+        return Comando_INVALIDO;
+    }
+    return OK;
+}
+
 MENSAGENS leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha) {
-    if((*rj)->comando != NULL) return Comando_INVALIDO;
-    if(sscanf(linha,"%s %s",temp1,temp2) != 2) return Comando_INVALIDO;
+    int criado = 0; 
+    MENSAGENS a = verificaLimpaLinhaJogo (rj,&criado);
+    if(a==Comando_INVALIDO) return a;
+    if(sscanf(linha,"%s %s",temp1,temp2) != 2) {
+        if (criado) {
+            free(*rj);
+            *rj = NULL;
+        }
+        return Comando_INVALIDO;
+    }
     (*rj)->comando = malloc(strlen(temp1) + 1);
     (*rj)->jogoNome = malloc(strlen(temp2) + 1);
     strcpy((*rj)->comando,temp1);
@@ -158,9 +278,33 @@ MENSAGENS leLinhaJogo (RegrasJogo *rj, char *temp1, char *temp2,char *linha) {
     return OK;
 }
 
+
+MENSAGENS verificaLimpaLinhaBaralho (RegrasBaralhos *rb, int *criado) {
+    if (*rb == NULL) {
+        *rb = malloc(sizeof(struct regra3));
+        if (!*rb) return Comando_INVALIDO;
+        (*rb)->comando = NULL;
+        (*rb)->numeroDeBaralhos = 0;
+        *criado = 1;
+    }
+    if((*rb)->comando != NULL) {
+        if (*criado) free(*rb);
+        return Comando_INVALIDO;
+    }
+    return OK;
+}
+
 MENSAGENS leLinhaBaralho (RegrasBaralhos *rb, char *temp1, char *linha) {
-    if((*rb)->comando != NULL) return Comando_INVALIDO;
-    if(sscanf(linha,"%s %d",temp1,&(*rb)->numeroDeBaralhos) != 2 || (*rb)->numeroDeBaralhos < 1) return Comando_INVALIDO;
+    int criado = 0;
+    MENSAGENS a = verificaLimpaLinhaBaralho (rb,&criado);
+    if(a == Comando_INVALIDO) return a;
+    if(sscanf(linha,"%s %d",temp1,&(*rb)->numeroDeBaralhos) != 2 || (*rb)->numeroDeBaralhos < 1) {
+        if (criado) {
+            free(*rb);
+            *rb = NULL;
+        }
+        return Comando_INVALIDO;
+    }
     (*rb)->comando = malloc(strlen(temp1) + 1);
     strcpy((*rb)->comando,temp1);
     return OK;
@@ -197,10 +341,6 @@ MENSAGENS leFicheiro (FILE *f,RegrasMovAuto *rma,RegrasJogo *rj,RegrasBaralhos *
 }
 
 MENSAGENS abreFicheiro(char *nome,RegrasMovAuto *listaMA,RegrasJogo *listaJ,RegrasBaralhos *listaB,RegrasTipo *listaT,RegrasInit *listaI,RegrasWin *listaW) {
-    (*listaJ)->comando = NULL;
-    (*listaJ)->jogoNome = NULL;
-    (*listaB)->comando = NULL;
-    (*listaB)->numeroDeBaralhos = 0;
     char caminho[200];
     sprintf(caminho, "paciencias/%s", nome);
     FILE *f = fopen(caminho, "r");
@@ -215,8 +355,8 @@ MENSAGENS abreFicheiro(char *nome,RegrasMovAuto *listaMA,RegrasJogo *listaJ,Regr
 CONTEXTO inicializarContexto(void) {
     CONTEXTO c;
     c.ma = NULL;
-    c.rj = malloc(sizeof(struct regra2));
-    c.rb = malloc(sizeof(struct regra3));
+    c.rj = NULL;
+    c.rb = NULL;
     c.rt = NULL;
     c.ri = NULL;
     c.rw = NULL;
