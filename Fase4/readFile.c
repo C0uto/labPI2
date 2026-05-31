@@ -417,7 +417,7 @@ int lerNomeDoJogoDoSave(char *nome_save, char *nome_regras) {
  * * @param d -> Ponteiro para o diretorio aberto
  *
  */
-static void listarFicheirosPaciencia(DIR *d) {
+void listarFicheirosPaciencia(DIR *d) {
     struct dirent *dir;
     while ((dir = readdir(d)) != NULL) {
         int len = strlen(dir->d_name);
@@ -432,13 +432,41 @@ static void listarFicheirosPaciencia(DIR *d) {
  * * @param d -> Ponteiro para o diretorio aberto
  *
  */
-static void listarFicheirosSave(DIR *d) {
+void listarFicheirosSave(DIR *d) {
     struct dirent *dir;
     while ((dir = readdir(d)) != NULL) {
         size_t len = strlen(dir->d_name);
         if (len >= 5 && strcmp(dir->d_name + len - 5, ".save") == 0)
             printf("%s\n", dir->d_name);
     }
+}
+
+/**
+ * Auxiliar para listar as paciencias disponiveis
+ */
+int mostrarDiretorioPaciencias(void) {
+    DIR *d = opendir("paciencias");
+    if (!d) {
+        printf("Erro: pasta 'paciencias' nao encontrada.\n");
+        return 1;
+    }
+    listarFicheirosPaciencia(d);
+    closedir(d);
+    return 0;
+}
+
+/**
+ * Auxiliar para listar os saves disponiveis
+ */
+int mostrarDiretorioSaves(void) {
+    DIR *d_save = opendir("saves");
+    if (!d_save) {
+        printf("Erro: pasta 'saves' nao encontrada.\n");
+        return 1;
+    }
+    listarFicheirosSave(d_save);
+    closedir(d_save);
+    return 0;
 }
 
 /**
@@ -450,20 +478,9 @@ static void listarFicheirosSave(DIR *d) {
  *
  */
 int abrirPastaImprime(char *nome, int *carregar_save) {
-    DIR *d = opendir("paciencias");
-    if (!d) {
-        printf("Erro: pasta 'paciencias' nao encontrada.\n");
-        return 1;
-    }
-    listarFicheirosPaciencia(d);
-    closedir(d);
-    DIR *d_save = opendir("saves");
-    if (!d_save) {
-        printf("Erro: pasta 'saves' nao encontrada.\n");
-        return 1;
-    }
-    listarFicheirosSave(d_save);
-    closedir(d_save);
+    if (mostrarDiretorioPaciencias() != 0) return 1;
+    if (mostrarDiretorioSaves() != 0) return 1;
+
     printf("Escolha uma paciencia ou um save para carregar o jogo gravado: ");
     scanf("%s", nome);
     while (getchar() != '\n');
